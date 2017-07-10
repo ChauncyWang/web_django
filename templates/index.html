@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome</title>
+</head>
+<body>
+    <h1>params:{{ params }}</h1>
+    <h1>path:{{ path }}</h1>
+    {% if path == '/wx/' %}
+        wx
+    {% else %}
+        not wx
+    {% endif %}
+</body>
+</html>

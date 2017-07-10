@@ -25,7 +25,7 @@ SECRET_KEY = 'f4m8sam2g7tbvl8ek+-8feww^r^3s*mur0@5#22h!h&+s1!ll$'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['120.27.112.157']
 
 
 # Application definition
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'web_django',
     'wxoa.apps.WxoaConfig'
 ]
 
@@ -114,7 +115,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/

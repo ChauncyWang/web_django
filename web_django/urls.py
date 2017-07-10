@@ -20,5 +20,5 @@ import wxoa.views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^wx/', wxoa.views.hello),
+    url(r'^wx', wxoa.views.hello),
 ]
