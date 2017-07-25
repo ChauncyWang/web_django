@@ -1,0 +1,8 @@
+img {
+    width: 300px;
+    height: 200px;
+}
+div {
+    background-color: #2aabd2;
+    box-shadow: inset 1px -1px 1px #444,inset -1px 1px 1px #444;
+}

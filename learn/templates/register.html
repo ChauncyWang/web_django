@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GG吧</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script type="text/javascript" src="{% static 'js/jquery-1.7.2.js' %}"></script>
+    <script type="text/javascript">
+        var C = jQuery.noConflict();
+        C(document).ready(function () {
+            C("p#click").click(function () {
+                C.get("{% static 'js/jquery-1.7.2.js' %}",function (data, status) {
+                    alert(status);
+                });
+            });
+        });
+    </script>
+    <style type="text/css">
+        p{
+            border: dashed 1px #4cae4c;
+            width: 100px;
+            height: 100px;
+        }
+        .blue{
+            background: cornflowerblue;
+        }
+    </style>
+</head>
+<body>
+</body>
+<p id="show">窝气</p>
+<p id="click"></p>
+</html>

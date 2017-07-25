@@ -13,7 +13,11 @@ from wxoa.services.untils import validate_token
 @csrf_exempt
 def hello(request):
     if request.method == "GET":
-        return HttpResponse(validate_token(request.GET))
+        re = validate_token(request.GET)
+        if re == "false":
+            return render(request, "index.html")
+        else:
+            return HttpResponse(validate_token(request.GET))
     else:
         print("POST")
         r = parse_xml_msg(request.body)

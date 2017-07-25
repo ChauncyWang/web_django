@@ -25,6 +25,6 @@ def validate_token(GET, token=config.token):
         if hashcode == signature:
             return echostr
         else:
-            return ""
-    except Exception as e:
-        return "Hello,this is token validation page!"
+            return "false"
+    except Exception:
+        return "false"
