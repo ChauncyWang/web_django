@@ -4,7 +4,6 @@ import json
 import os
 
 from Crypto.Cipher import AES
-
 from music.netease import config
 
 
