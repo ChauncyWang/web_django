@@ -1,0 +1,7 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource>
+        <file>img/netease_logo_big.png</file>
+        <file>img/netease_logo_small.png</file>
+    </qresource>
+</RCC>

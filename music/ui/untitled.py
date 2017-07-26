@@ -12,12 +12,12 @@ class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
         Form.resize(514, 300)
-        Form.setStyleSheet("border: 10px solid red;")
+        Form.setStyleSheet("")
         self.label = QtWidgets.QLabel(Form)
-        self.label.setGeometry(QtCore.QRect(50, 10, 391, 31))
-        self.label.setStyleSheet("background-color: rgb(0, 255, 127);\n"
-"border-color:10px solid red;")
+        self.label.setGeometry(QtCore.QRect(10, 10, 50, 50))
+        self.label.setStyleSheet("background-image: url(:/img/netease_logo_small.png);")
         self.label.setLineWidth(1)
+        self.label.setText("")
         self.label.setObjectName("label")
 
         self.retranslateUi(Form)
@@ -26,5 +26,5 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.label.setText(_translate("Form", "TextLabel"))
 
+from .res import res_rc

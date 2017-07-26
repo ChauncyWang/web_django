@@ -15,6 +15,7 @@ class NSong(Song):
         self.alias = dic['alia']
         self.album = NAlbum(dic['al'])
         self.mv = dic['mv']
+        self.url = None
 
     def __str__(self):
         s = "  "

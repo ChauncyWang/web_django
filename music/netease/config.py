@@ -8,3 +8,4 @@ pub_key = "010001"
 
 search_url = "http://music.163.com/weapi/cloudsearch/get/web?csrf_token="
 song_url = 'http://music.163.com/weapi/song/enhance/player/url?csrf_token='
+lyric_url = 'http://music.163.com/api/song/lyric'
