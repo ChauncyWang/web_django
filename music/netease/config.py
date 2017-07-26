@@ -6,4 +6,5 @@ modulus = "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68" \
 nonce = "0CoJUm6Qyw8W8jud"
 pub_key = "010001"
 
-url = "http://music.163.com/weapi/cloudsearch/get/web?csrf_token="
+search_url = "http://music.163.com/weapi/cloudsearch/get/web?csrf_token="
+song_url = 'http://music.163.com/weapi/song/enhance/player/url?csrf_token='
