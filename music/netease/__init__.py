@@ -15,13 +15,16 @@ class NSong(Song):
         self.alias = dic['alia']
         self.album = NAlbum(dic['al'])
         self.mv = dic['mv']
+        self.dt = dic['dt']
         self.url = None
 
     def __str__(self):
         s = "  "
         for art in self.artist:
             s += art.name
-        return "%s-%s\n%s\n%s\n" % (self.name,self.alias, s, self.album.name)
+        min = self.dt//1000//60
+        sec = self.dt//1000 - min * 60
+        return "%s-%s\n%s\n%s\n%02d:%02d" % (self.name, self.alias, s, self.album.name, min, sec)
 
 
 class NArtist(Artist):
