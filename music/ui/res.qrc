@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/png">
+    <file alias="nlb">res/png/netease_logo_big.png</file>
+    <file alias="nls">res/png/netease_logo_small.png</file>
+  </qresource>
+</RCC>

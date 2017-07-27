@@ -1,9 +1,0 @@
-<RCC>
-  <qresource prefix="png">
-    <file>png/netease_logo_big.png</file>
-    <file>png/netease_logo_small.png</file>
-  </qresource>
-  <qresource prefix="font">
-      <file>font/fontawesome-webfont.ttf</file>
-  </qresource>
-</RCC>
