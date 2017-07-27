@@ -222,9 +222,9 @@
                 jsonp: "callback",
                 data: h,
                 success: function (e) {
-                    e && (e.status ? ($(".qrcode").find("img").attr("src", e.codes_url), t && t(e)) : 31001 == e.err_code && (setTimeout(function () {
+                    e && (e.status ? ($(".qrcode").find("png").attr("src", e.codes_url), t && t(e)) : 31001 == e.err_code && (setTimeout(function () {
                             r.shareIsCanClick = !0
-                        }, 1e3), $(".qrcode").find("img").attr("src", "http://www2.kugou.kugou.com/apps/kucodeAndShare/static/images/no_share.jpg"), t && t("")))
+                        }, 1e3), $(".qrcode").find("png").attr("src", "http://www2.kugou.kugou.com/apps/kucodeAndShare/static/images/no_share.jpg"), t && t("")))
                 },
                 error: function (e, n) {
                     t && t("")
@@ -256,7 +256,7 @@
                 title: "分享歌曲",
                 skin: "share_popup",
                 fixed: !0,
-                content: ["<div id='share_list'>", " <dl>", "<dt class='share_weixin'></dt>", "<dd class='qrcode'><img src='' /></dd>", "<dd>微信</dd>", "</dl>", "<dl>", "<dt class='share_friend'></dt>", "<dd>QQ好友</dd>", "</dl>", "<dl>", "<dt class='share_qzone'></dt>", "<dd>QQ空间</dd>", "</dl>", "<dl>", "<dt class='share_weibo'></dt>", "<dd>新浪微博</dd>", "</dl>", "</div>"].join(""),
+                content: ["<div id='share_list'>", " <dl>", "<dt class='share_weixin'></dt>", "<dd class='qrcode'><png src='' /></dd>", "<dd>微信</dd>", "</dl>", "<dl>", "<dt class='share_friend'></dt>", "<dd>QQ好友</dd>", "</dl>", "<dl>", "<dt class='share_qzone'></dt>", "<dd>QQ空间</dd>", "</dl>", "<dl>", "<dt class='share_weibo'></dt>", "<dd>新浪微博</dd>", "</dl>", "</div>"].join(""),
                 onshow: function () {
                     var r = n.delHtmlTag(e.author_name) + "-" + n.delHtmlTag(e.audio_name),
                         o = "我在酷狗常听的《" + r + "》，你也来听听吧！（来自 web 酷狗音乐）";
@@ -326,7 +326,7 @@
         }, isExists: function () {
             return $.jStorage.reInit(), $.jStorage.get("playFlag")
         }, addTips: function () {
-            var e = ['<div class="playtips"><div class="relativeD">', '<div class="playtips_bg"></div>', '<img src="http://www.kugou.com/yy/static/images/play/icon_add.png" alt="" class="playtips_icon">', '<p class="tipstext">已添加至播放页</p>', "</div></div>"].join(""),
+            var e = ['<div class="playtips"><div class="relativeD">', '<div class="playtips_bg"></div>', '<png src="http://www.kugou.com/yy/static/images/play/icon_add.png" alt="" class="playtips_icon">', '<p class="tipstext">已添加至播放页</p>', "</div></div>"].join(""),
                 t = $(".playtips");
             t.length > 0 ? t.show().animate({opacity: "1"}).show() : $("body").append(e);
             var n = setTimeout(function () {
@@ -781,7 +781,7 @@
                 success: function (t) {
                     if (1 == t[0].status && 1 == t[0].ctype) {
                         var n = t[0].data[1];
-                        n.singername == e ? ($(songEle).find(".similar_singer").show(), $(songEle).find(".singer_img").attr("href", "http://www.kugou.com/singer/" + n.singerid + ".html"), $(songEle).find(".singer_img img").attr("src", n.img), $(songEle).find(".singer_name").html('<a target="_blank" href="http://www.kugou.com/singer/' + n.singerid + '.html" >' + n.singername + "</a>"), $(songEle).find(".singer_info span").eq(0).html('<a target="_blank" href="http://www.kugou.com/singer/' + n.singerid + '.html"><i>' + n.song_count + "</i>单曲</a> "), $(songEle).find(".singer_info span").eq(1).html('<a target="_blank" href="http://www.kugou.com/singer/' + n.singerid + '.html?mv"><i>' + n.mv_count + "</i>MV</a>")) : $(songEle).find(".similar_singer").hide()
+                        n.singername == e ? ($(songEle).find(".similar_singer").show(), $(songEle).find(".singer_img").attr("href", "http://www.kugou.com/singer/" + n.singerid + ".html"), $(songEle).find(".singer_img png").attr("src", n.img), $(songEle).find(".singer_name").html('<a target="_blank" href="http://www.kugou.com/singer/' + n.singerid + '.html" >' + n.singername + "</a>"), $(songEle).find(".singer_info span").eq(0).html('<a target="_blank" href="http://www.kugou.com/singer/' + n.singerid + '.html"><i>' + n.song_count + "</i>单曲</a> "), $(songEle).find(".singer_info span").eq(1).html('<a target="_blank" href="http://www.kugou.com/singer/' + n.singerid + '.html?mv"><i>' + n.mv_count + "</i>MV</a>")) : $(songEle).find(".similar_singer").hide()
                     } else $(songEle).find(".similar_singer").hide()
                 },
                 error: function (e) {
@@ -857,7 +857,7 @@
                 for (var t = "", r = 0, o = e.length; r < o; r++) {
                     e[r].total_play_count.toString().length > 4 && (e[r].total_play_count = (e[r].total_play_count / 1e4).toFixed(1) + "万");
                     var i = n.delHtmlTag(e[r].specialname), a = n.delHtmlTag(e[r].nickname);
-                    t += ["<li>", '<div  class="width_f_li clearfix"><a class="special_link" target="_blank"  title="' + i + '" href="http://www.kugou.com/yy/special/single/' + e[r].specialid + '.html"><img class="special_img" src="' + e[r].img + '"></a>', '<a target="_blank" class="special_name special_link" title="' + i + '" href="http://www.kugou.com/yy/special/single/' + e[r].specialid + '.html">' + e[r].specialname + "</a>", "&nbsp;</div>", '<div class="width_s_li" title="' + a + '">' + e[r].nickname + "</div>", '<div class="width_t_li">' + e[r].total_play_count + "</div>", '<div class="play-item" ><span data="' + e[r].specialid + '" class="search_icon icon_play"></div>', "</li>"].join("")
+                    t += ["<li>", '<div  class="width_f_li clearfix"><a class="special_link" target="_blank"  title="' + i + '" href="http://www.kugou.com/yy/special/single/' + e[r].specialid + '.html"><png class="special_img" src="' + e[r].img + '"></a>', '<a target="_blank" class="special_name special_link" title="' + i + '" href="http://www.kugou.com/yy/special/single/' + e[r].specialid + '.html">' + e[r].specialname + "</a>", "&nbsp;</div>", '<div class="width_s_li" title="' + a + '">' + e[r].nickname + "</div>", '<div class="width_t_li">' + e[r].total_play_count + "</div>", '<div class="play-item" ><span data="' + e[r].specialid + '" class="search_icon icon_play"></div>', "</li>"].join("")
                 }
                 return t
             }
@@ -973,7 +973,7 @@
                     var i = "http://www.kugou.com/mvweb/html/mv_" + e[r].MvID + ".html",
                         a = "http://imge.kugou.com/mvhdpic/240/" + e[r].Pic.substring(0, 8) + "/" + e[r].Pic,
                         s = n.delHtmlTag(e[r].MvName), l = n.delHtmlTag(e[r].SingerName);
-                    t += ["<li>", '<div class="mv_container">', '<a class="mv_cover"  target="_blank" href="' + i + '" hidefocus="true" title="' + s + '" > ', '<span class="mv_img">', '<img width="100%" height="100%" src="' + a + '"  alt=""  class="">', "</span> ", '<span class="mv_play"><i class="search_icon"></i></span>', '<span class="mv_shadow"></span>', "</a>", '<a class="mv_name" target="_blank"  href="' + i + '" hidefocus="true" data-index="' + r + '" data-type="" title="' + s + '">' + e[r].MvName + "</a> ", '<span class="mv_singer" title="' + l + '">' + e[r].SingerName + "</span>", "</div>", "</li>"].join("")
+                    t += ["<li>", '<div class="mv_container">', '<a class="mv_cover"  target="_blank" href="' + i + '" hidefocus="true" title="' + s + '" > ', '<span class="mv_img">', '<png width="100%" height="100%" src="' + a + '"  alt=""  class="">', "</span> ", '<span class="mv_play"><i class="search_icon"></i></span>', '<span class="mv_shadow"></span>', "</a>", '<a class="mv_name" target="_blank"  href="' + i + '" hidefocus="true" data-index="' + r + '" data-type="" title="' + s + '">' + e[r].MvName + "</a> ", '<span class="mv_singer" title="' + l + '">' + e[r].SingerName + "</span>", "</div>", "</li>"].join("")
                 }
                 return t
             }

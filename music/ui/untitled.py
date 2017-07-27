@@ -15,7 +15,7 @@ class Ui_Form(object):
         Form.setStyleSheet("")
         self.label = QtWidgets.QLabel(Form)
         self.label.setGeometry(QtCore.QRect(10, 10, 50, 50))
-        self.label.setStyleSheet("background-image: url(:/img/netease_logo_small.png);")
+        self.label.setStyleSheet("background-image: url(:/png/netease_logo_small.png);")
         self.label.setLineWidth(1)
         self.label.setText("")
         self.label.setObjectName("label")
@@ -27,4 +27,3 @@ class Ui_Form(object):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
 
-from .res import res_rc
