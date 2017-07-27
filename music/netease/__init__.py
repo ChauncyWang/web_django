@@ -37,6 +37,10 @@ class NArtist(Artist):
         self.id = dic['id']
         self.name = dic['name']
         self.alias = dic['alias']
+        self.album_size = dic['albumSize']
+        self.mv_size = dic['mvSize']
+        self.pic_url = dic['picUrl']
+        self.pic_id = dic['picId']
 
 
 class NAlbum(Album):
@@ -78,7 +82,7 @@ class SearchType:
     """
     song = 1
     album = 10
-    singer = 100
+    artist = 100
     song_sheet = 1000
     user = 1002
     mv = 1004

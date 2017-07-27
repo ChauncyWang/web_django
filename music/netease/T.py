@@ -7,7 +7,7 @@ from music.ui import MyWidget
 
 from music.ui.untitled import Ui_Form
 
-a = api.Crawler().search_song("岳云鹏", 0, 20)
+a = api.Crawler().search_artists("因为爱情", 0, 20)
 print(a)
 
 """

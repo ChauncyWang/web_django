@@ -21,6 +21,10 @@ class Artist:
         self.id = None
         self.name = None
         self.alias = None
+        self.album_size = None
+        self.mv_size = None
+        self.pic_url = None
+        self.pic_id = None
 
 
 class Album:
