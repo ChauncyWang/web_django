@@ -70,6 +70,7 @@ class Crawler:
             songs = []
             for song in result_songs:
                 s = NSong(song)
+                s.url = self.get_song_url_by_id(s.id)
                 songs.append(s)
             return songs
         else:
@@ -135,4 +136,4 @@ class Crawler:
         params = {'id': _id, 'lv': -1, 'kv': -1, 'tv': -1}
         result = self.get(lyric_url, params)
         result = json.loads(result.text)
-        print(result['lrc']['lyric'])
+        return result['lrc']['lyric']
