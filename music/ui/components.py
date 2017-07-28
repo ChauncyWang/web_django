@@ -40,15 +40,27 @@ class PlayBar(QtWidgets.QWidget):
         """
         对子控件尽行相关的初始化
         """
-        self.play_buttons.setGeometry(0, 20, 140, 40)
-        self.img.setGeometry(140,0,60,60)
-        self.song_info.setGeometry(200, 20, 150, 20)
-        self.cur_time.setGeometry(180, 40, 40, 20)
-        self.process_bar.setGeometry(220, 40, 400, 20)
-        self.total_time.setGeometry(620, 40, 40, 20)
-        self.lyric.setGeometry(340, 20, 180, 20)
+        style = """
+            PlayBar {background-color:#111111;}
+            #lyric {color:green;}
+            #cur_time,#total_time,#song_info {color:#AFAFAF;}
+            #img {border-width:5px;border-style:double; border-color:#FFFFFF;}
+        """
+        self.play_buttons.setGeometry(0, 0, 180, 60)
+        self.img.setGeometry(180, 0, 60, 60)
+        self.img.setObjectName('img')
+        self.song_info.setGeometry(250, 0, 200, 20)
+        self.song_info.setObjectName('song_info')
+        self.cur_time.setGeometry(250, 40, 40, 20)
+        self.cur_time.setObjectName('cur_time')
+        self.process_bar.setGeometry(300, 40, 390, 20)
+        self.total_time.setGeometry(700, 40, 40, 20)
+        self.total_time.setObjectName('total_time')
+        self.lyric.setGeometry(400, 20, 180, 20)
+        self.lyric.setObjectName("lyric")
         self.cur_time.setText("00:00")
         self.total_time.setText("00:00")
+        self.setStyleSheet(style)
 
     def signal_slot(self):
         """
@@ -108,7 +120,7 @@ class PlayBar(QtWidgets.QWidget):
             else:
                 time = int(result.group(1)) * 1000 * 60 + int(result.group(2)) * 1000 + int(result.group(3))
                 if time <= x:
-                    line = line[line.index(']')+1:]
+                    line = line[line.index(']') + 1:]
                     self.lyric.setText(line)
                     self.lyric_index += 1
                 else:
@@ -231,23 +243,19 @@ class ProcessBar(QWidget):
 
 
 class PlayButtons(QWidget):
-    style = "#left,#right {border-radius: 12px;background: #FF6060;}" \
-            "#left:hover,#right:hover {border-radius: 12px;background-color:#FF2020;}" \
-            "#play {border-radius: 16px;background: #FF6060;}" \
-            "#play:hover {border-radius: 16px;background-color:#FF2020;}"
+    style = "#left,#right {color:#AFAFAF;}" \
+            "#play,#left:hover,#right:hover,#play:hover {color:#FFFFFF;}"
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedSize(40 * 3, 40)
         # http://www.bootcss.com/p/font-awesome/design.html
         QFontDatabase.addApplicationFont(os.path.dirname(__file__) + '/res/font/fontawesome-webfont.ttf')
-        font = QFont("fontawesome", 15)
-        self.left = self.new_label("left", '\uf048', 10)
-        self.left.setGeometry(8, 8, 24, 24)
-        self.play = self.new_label("play", '\uf04b', 15)
-        self.play.setGeometry(44, 4, 32, 32)
-        self.right = self.new_label("right", "\uf051", 10)
-        self.right.setGeometry(88, 8, 24, 24)
+        self.left = self.new_label("left", '\uf048', 15)
+        self.left.setGeometry(20, 10, 40, 40)
+        self.play = self.new_label("play", '\uf04b', 24)
+        self.play.setGeometry(65, 0, 60, 60)
+        self.right = self.new_label("right", "\uf051", 15)
+        self.right.setGeometry(120, 10, 40, 40)
         self.setStyleSheet(self.style)
         self.playing = True
         self.update()

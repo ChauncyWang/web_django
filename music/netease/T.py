@@ -9,8 +9,8 @@ from music.ui import components
 
 app = QApplication(sys.argv)
 w = components.PlayBar()
+a = Crawler()
+w.set_song(a.search_songs("九九八十一", 0, 1)[0])
 # w = MyWidget.ProcessBar()
 w.show()
-a = Crawler()
-w.set_song(a.search_songs("我好像在哪见过你",0,1)[0])
 sys.exit(app.exec_())
