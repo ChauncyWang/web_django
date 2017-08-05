@@ -103,7 +103,7 @@ class NeteaseAPI:
         :param _id:歌曲id
         :return:歌曲链接
         """
-        params = {'ids': [_id], 'br': 96000, 'csrf_token': ''}
+        params = {'ids': [_id], 'br': 320000, 'csrf_token': ''}
         response = self.post(song_url, params)
         response = json.loads(response.text)
         return response['data'][0]['url']
@@ -118,7 +118,7 @@ class NeteaseAPI:
         ids = []
         for song in songs:
             ids.append(song.id)
-        params = {'ids': ids, 'br': 96000, 'csrf_token': ''}
+        params = {'ids': ids, 'br': 320000, 'csrf_token': ''}
         response = self.post(song_url, params)
         response = json.loads(response.text)
         result = []

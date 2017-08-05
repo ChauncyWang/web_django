@@ -1,18 +1,16 @@
-import hashlib
 import os
 import re
 
-import requests
 from PyQt5.QtCore import QRect, Qt, pyqtSignal, QUrl
 from PyQt5.QtGui import QPainter, QColor, QFontDatabase, QFont, QPixmap
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import QLabel, QApplication, QLineEdit, QFrame, QMainWindow, QTableWidget, QTableWidgetItem, \
-    QAbstractItemView
+    QAbstractItemView, QComboBox, QSlider
 
 from music import Song
 from music.netease import NSong
 from music.netease.api import NeteaseAPI
-from music.ui.util import download
+from music.ui.util import download_mp3, download_img
 
 """
 QFontDatabase.addApplicationFont(os.path.dirname(__file__) + '/res/font/fontawesome-webfont.ttf')
@@ -73,15 +71,15 @@ class PlayBar(QFrame):
         super().__init__(parent)
         QFontDatabase.addApplicationFont(os.path.dirname(__file__) + '/res/font/fontawesome-webfont.ttf')
         self.play_buttons = PlayButtons(self)
-        self.process_bar = ProcessBar(self)
+        self.process_bar = ProgressBar(self)
         self.song_info = QLabel(self)
         self.player = QMediaPlayer()
         self.cur_time = QLabel(self)
         self.total_time = QLabel(self)
         self.lyric = QLabel()
-        self.lyric.setWindowFlags(Qt.Tool | Qt.SubWindow | Qt.Popup | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.lyric.setAttribute(Qt.WA_TranslucentBackground)
-        self.lyric.show()
+        self.quality = QComboBox(self)
+        self.volume_icon = AwesomeLabel(self, 'volume_icon', '\uf027', 40)
+        self.volume = QSlider(self)
 
         self.music = NeteaseAPI()
         self.img = QLabel(self)
@@ -93,11 +91,21 @@ class PlayBar(QFrame):
     def paintEvent(self, event):
         self.play_buttons.setGeometry(0, 0, 160, self.height())
         self.img.setGeometry(180, 0, 60, 60)
-        self.song_info.setGeometry(250, 0, 200, 20)
-        self.cur_time.setGeometry(250, 40, 80, 20)
-        self.process_bar.setGeometry(320, 40, self.width()-320-200, 20)
-        self.total_time.setGeometry(700, 40, 60, 20)
-        self.lyric.setGeometry(0, QApplication.desktop().height() - 400, QApplication.desktop().width(), 400)
+        self.song_info.setGeometry(250, 0, 200, 30)
+        font = QFont()
+        font.setPixelSize(12)
+        self.cur_time.setGeometry(260, 30, 40, 10)
+        self.cur_time.setFont(font)
+        self.cur_time.setAlignment(Qt.AlignCenter)
+        self.process_bar.setGeometry(300, 30, self.width() - 300 - 200 - 40, 10)
+        self.total_time.setGeometry(self.width() - 200 - 40, 30, 40, 10)
+        self.total_time.setFont(font)
+        self.total_time.setAlignment(Qt.AlignCenter)
+        self.volume_icon.setGeometry(self.width() - 200, 10, 40, 40)
+        self.volume.setOrientation(Qt.Horizontal)
+        self.volume.setGeometry(self.width() - 160, 10, 160, 40)
+        self.quality.setGeometry(250, 40, 100, 20)
+        self.lyric.setGeometry(0, QApplication.desktop().height() - 200, QApplication.desktop().width(), 200)
 
     def init(self):
         """
@@ -119,6 +127,15 @@ class PlayBar(QFrame):
         self.lyric.setObjectName("lyric")
         self.cur_time.setText("00:00")
         self.total_time.setText("00:00")
+
+        self.quality.addItem("超高品质")
+        self.quality.addItem("高品质")
+        self.quality.addItem("标准")
+
+        self.lyric.setWindowFlags(Qt.Tool | Qt.SubWindow | Qt.Popup | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.lyric.setAttribute(Qt.WA_TranslucentBackground)
+        self.lyric.show()
+
         # self.setStyleSheet(style)
 
     def signal_slot(self):
@@ -128,6 +145,7 @@ class PlayBar(QFrame):
         self.play_buttons.play.clicked.connect(self.play_pause)
         self.player.positionChanged.connect(self.update_position)
         self.process_bar.rate_changed.connect(self.set_position)
+        self.volume.valueChanged.connect(self.player.setVolume)
 
     def set_song(self, song):
         """
@@ -144,13 +162,8 @@ class PlayBar(QFrame):
             self.song_info.setText(song.name + "-" + song.artist[0].name)
             self.lyrics = self.music.get_song_lyric_by_id(self.song.id).split("\n")
             self.process_bar.rate = 0
-            md = hashlib.md5()
-            md.update(song.name.encode("utf8"))
-            download(song.url, "cache/%s.mp3" % md.hexdigest(), self.download_update, self.download_finished)
-            pic = QPixmap()
-            pic.loadFromData(requests.get(self.song.album.pic_url).content)
-            self.img.setPixmap(pic)
-            self.img.setScaledContents(True)
+            download_mp3(song.url, song.name, self.download_music_update, self.download_music_finished)
+            download_img(song.album.pic_url, song.album.name, None, self.download_head_img_finished)
             self.player.play()
             self.update()
 
@@ -168,7 +181,6 @@ class PlayBar(QFrame):
         self.update()
 
     def update_position(self, x):
-        print(self.player.bufferStatus())
         m = x // 1000 // 60
         s = x // 1000 - 60 * m
         ms = x - 1000 * 60 * m - 1000 * s
@@ -191,14 +203,32 @@ class PlayBar(QFrame):
         self.process_bar.rate = x / self.song.dt
         self.update()
 
-    def download_update(self, x):
+    def download_music_update(self, x):
+        """
+        歌曲下载过程的槽
+        :param x: 下载百分比
+        """
         self.process_bar.rate = x
         self.process_bar.update()
 
-    def download_finished(self, file_name):
-        self.player.setMedia(QMediaContent(QUrl(file_name)))
+    def download_music_finished(self, file_name):
+        """
+        歌曲下载完成的槽
+        :param file_name: 歌曲存储位置
+        """
+        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_name)))
         self.process_bar.loaded = True
         self.player.play()
+
+    def download_head_img_finished(self, file_name):
+        """
+        头像下载完成的槽
+        :param file_name: 头像存储位置
+        """
+        pic = QPixmap()
+        pic.loadFromData(open(file_name, 'rb').read())
+        self.img.setPixmap(pic)
+        self.img.setScaledContents(True)
 
     def set_position(self, x):
         self.player.setPosition(x * self.song.dt)
@@ -209,7 +239,7 @@ class PlayBar(QFrame):
             self.play_pause()
 
 
-class ProcessBar(QFrame):
+class ProgressBar(QFrame):
     """
     进度条
     """
@@ -217,9 +247,9 @@ class ProcessBar(QFrame):
     click = pyqtSignal(float)
     rate_changed = pyqtSignal(float)
     # 进度点内圆半径
-    in_radius = 3
+    in_radius = 1
     # 进度点外圆半径
-    out_radius = 10
+    out_radius = 4
 
     # 进度拖动点击的信号
     def __init__(self, parent=None):
@@ -234,6 +264,8 @@ class ProcessBar(QFrame):
         self.rate = 0
         # 是否加载完成
         self.loaded = False
+
+        self.setMouseTracking(True)
 
     def mousePressEvent(self, event):
         self.clicked = True
@@ -424,9 +456,10 @@ class SearchTable(QTableWidget):
             self.setItem(i, 0, QTableWidgetItem(self.songs[i - 1].name))
             self.setItem(i, 1, QTableWidgetItem(self.songs[i - 1].artist[0].name))
             self.setItem(i, 2, QTableWidgetItem(self.songs[i - 1].album.name))
-            lab = AwesomeLabel(None, str(i - 1), "B", 15)
-            self.setCellWidget(i, 3, lab)
-            lab.send.connect(self.play_clicked)
+            if self.songs[i - 1].url is not None:
+                lab = AwesomeLabel(None, str(i - 1), "B", 15)
+                self.setCellWidget(i, 3, lab)
+                lab.send.connect(self.play_clicked)
 
     def play_clicked(self, name):
         self.play_song.emit(self.songs[int(name)])

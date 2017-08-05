@@ -26,3 +26,7 @@
 SearchTable {
     background-color: #a0ffffff;
 }
+
+#lyric {
+    color:#8080FFFF;
+}

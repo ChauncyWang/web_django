@@ -3,18 +3,16 @@ import sys
 
 import os
 
-from PyQt5.QtCore import Qt, QAbstractItemModel
+from PyQt5.QtCore import Qt, QAbstractItemModel, QTextCodec
 from PyQt5.QtGui import QFontDatabase, QStandardItemModel
 from PyQt5.QtWidgets import QApplication, QLabel, QTableWidget, QTableWidgetItem, QWidget, QTableView
 
 from music.netease.api import NeteaseAPI
 from music.ui.components import PlayBar, TitleBar, MainWindow, SearchTable
-from music.ui.util import Download, download
 from music.ui import resource
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
-
+                    format='%(asctime)s (%(filename)s:%(lineno)d) [%(threadName)s]-[%(levelname)s]: %(message)s',)
 
 app = QApplication(sys.argv)
 # a = Crawler()
