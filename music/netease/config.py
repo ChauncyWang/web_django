@@ -9,3 +9,13 @@ pub_key = "010001"
 search_url = "http://music.163.com/weapi/cloudsearch/get/web?csrf_token="
 song_url = 'http://music.163.com/weapi/song/enhance/player/url?csrf_token='
 lyric_url = 'http://music.163.com/api/song/lyric'
+
+header = {
+    "Host": "music.163.com",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:54.0) Gecko/20100101 Firefox/54.0",
+    "Accept": "*/*",
+    "Accept-Language": "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3",
+    "Accept-Encoding": "gzip, deflate",
+    "Connection": "keep-alive",
+    "Cache-Control": "max-age=0",
+}

@@ -1,23 +1,22 @@
 import json
+import logging
+
 import requests
 
-from music.netease import NSong, SearchType, NArtist
+from music.netease import NSong, SearchType, NArtist, config
 from music.netease.config import *
 from music.netease.encrypt import encrypted_request
 
 from music.netease.exception import *
 
 
-class Crawler:
+class NeteaseAPI:
     """
     音乐爬虫
     """
 
-    def __init__(self):
-        self.session = requests.session()
-
     @exception
-    def post(self, url, data=None, headers=None):
+    def post(self, url, data=None, headers=config.header):
         """
         对data 进行加密的 POST 请求
         :param url: post url
@@ -25,18 +24,18 @@ class Crawler:
         :param headers: post 请求的头
         :return: post 请求返回的信息
         """
-        response = self.session.post(url, data=encrypted_request(data), headers=headers)
+        response = requests.post(url, data=encrypted_request(data), headers=headers)
         if response.status_code == 200:
             return response
         else:
             raise RequestException(response.status_code)
 
     @exception
-    def get(self, url, params=None, headers=None):
+    def get(self, url, params=None, headers=config.header):
         """
         Get 请求
         """
-        response = self.session.get(url, params=params, headers=headers)
+        response = requests.get(url, params=params, headers=headers)
         if response.status_code == 200:
             return response
         else:
@@ -51,6 +50,7 @@ class Crawler:
         :param limit:每页大小
         :return: json 数据类型的信息
         """
+        logging.info("搜索音乐:[类型:%s, 搜索内容:%s]" % (SearchType.str(_type), content))
         params = {'s': content, 'type': _type, 'offset': offset,
                   'sub': 'false', 'limit': limit}
         return self.post(search_url, params)
@@ -103,7 +103,7 @@ class Crawler:
         :param _id:歌曲id
         :return:歌曲链接
         """
-        params = {'ids': [_id], 'br': 320000, 'csrf_token': ''}
+        params = {'ids': [_id], 'br': 96000, 'csrf_token': ''}
         response = self.post(song_url, params)
         response = json.loads(response.text)
         return response['data'][0]['url']
@@ -118,7 +118,7 @@ class Crawler:
         ids = []
         for song in songs:
             ids.append(song.id)
-        params = {'ids': ids, 'br': 320000, 'csrf_token': ''}
+        params = {'ids': ids, 'br': 96000, 'csrf_token': ''}
         response = self.post(song_url, params)
         response = json.loads(response.text)
         result = []

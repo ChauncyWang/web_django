@@ -1,0 +1,28 @@
+#main_window {
+    border-image: url(:/jpg/bg1);
+}
+
+#title_bar {
+    background-color: #8080FFFF;
+}
+
+#play_bar {
+    background-color: #80000000;
+}
+
+#left_frame {
+    background-color: #80FFFFFF;
+}
+
+#cur_time, #total_time, #song_info {
+    color: #AFAFAF;
+}
+
+#img {
+    border-width: 5px;
+    border-style: double;
+    border-color: #FFFFFF;
+}
+SearchTable {
+    background-color: #a0ffffff;
+}

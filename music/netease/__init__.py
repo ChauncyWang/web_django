@@ -22,8 +22,8 @@ class NSong(Song):
         s = "  "
         for art in self.artist:
             s += art.name
-        min = self.dt//1000//60
-        sec = self.dt//1000 - min * 60
+        min = self.dt // 1000 // 60
+        sec = self.dt // 1000 - min * 60
         return "%s-%s\n%s\n%s\n%02d:%02d" % (self.name, self.alias, s, self.album.name, min, sec)
 
 
@@ -50,7 +50,6 @@ class NAlbum(Album):
         self.name = dic['name']
         self.pic_url = dic['picUrl']
         self.pic = dic['pic']
-
 
 
 class NQuality(Quality):
@@ -84,3 +83,9 @@ class SearchType:
     mv = 1004
     lyric = 1006
     radio_station = 1009
+    types = {song: '歌曲', album: '专辑', artist: '歌手', song_sheet: '歌单', user: '用户', mv: 'MV', lyric: '歌词',
+             radio_station: '电台'}
+
+    @staticmethod
+    def str(t):
+        return SearchType.types[t]

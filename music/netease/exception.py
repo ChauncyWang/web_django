@@ -13,7 +13,6 @@ def exception(method):
             print("[%s] 请求参数格式错误![%d:%s]" % (method.__name__, e.code, e.msg))
         except BaseException as e:
             print("[%s] API可能过期了!" % method.__name__)
-            e.with_traceback()
 
     return wrapper
 
