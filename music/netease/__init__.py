@@ -48,8 +48,9 @@ class NAlbum(Album):
         super().__init__()
         self.id = dic['id']
         self.name = dic['name']
-        self.pic_url = dic['picUrl']
-        self.pic = dic['pic']
+        self.type = dic.get('type')
+        self.size = dic.get('size')
+        self.pic_url = dic.get('picUrl')
 
 
 class NQuality(Quality):

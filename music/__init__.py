@@ -4,12 +4,9 @@ class Song:
     """
 
     def __init__(self):
-        self.id = None
         self.name = None
-        self.alias = None
         self.artist = []
         self.album = None
-        self.mv = None
 
 
 class Artist:
@@ -18,13 +15,22 @@ class Artist:
     """
 
     def __init__(self):
-        self.id = None
         self.name = None
-        self.alias = None
-        self.album_size = None
-        self.mv_size = None
-        self.pic_url = None
-        self.pic_id = None
+
+
+class Artists(list):
+    def __init__(self):
+        super().__init__()
+
+    def __str__(self):
+        s = ''
+        for t in self:
+            if isinstance(Artist, t):
+                s += t.name
+                s += '/'
+
+        s = s[:len(s) - 1]
+        return s
 
 
 class Album:
@@ -33,10 +39,7 @@ class Album:
     """
 
     def __init__(self):
-        self.id = None
         self.name = None
-        self.pic_url = None
-        self.pic = None
 
 
 class Quality:

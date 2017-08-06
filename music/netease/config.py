@@ -1,3 +1,5 @@
+import os
+
 modulus = "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68" \
           "ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee3" \
           "41f56135fccf695280104e0312ecbda92557c93870114af6c9d" \
@@ -19,3 +21,12 @@ header = {
     "Connection": "keep-alive",
     "Cache-Control": "max-age=0",
 }
+root_path = '%s/ChavaMusic/' % os.environ['HOME']
+cookie_path = root_path + 'cookie'
+cache_path = root_path + 'cache/'
+
+if not os.path.exists(root_path):
+    os.mkdir(root_path)
+
+if not os.path.exists(cache_path):
+    os.mkdir(cache_path)

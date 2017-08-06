@@ -1,14 +1,10 @@
 import logging
+import os
 import sys
 
-import os
+from PyQt5.QtWidgets import QApplication
 
-from PyQt5.QtCore import Qt, QAbstractItemModel, QTextCodec
-from PyQt5.QtGui import QFontDatabase, QStandardItemModel
-from PyQt5.QtWidgets import QApplication, QLabel, QTableWidget, QTableWidgetItem, QWidget, QTableView
-
-from music.netease.api import NeteaseAPI
-from music.ui.components import PlayBar, TitleBar, MainWindow, SearchTable
+from music.ui.components import MainWindow
 from music.ui import resource
 
 logging.basicConfig(level=logging.DEBUG,

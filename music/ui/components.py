@@ -1,11 +1,11 @@
 import os
 import re
 
-from PyQt5.QtCore import QRect, Qt, pyqtSignal, QUrl
-from PyQt5.QtGui import QPainter, QColor, QFontDatabase, QFont, QPixmap
+from PyQt5.QtCore import QRect, Qt, pyqtSignal, QUrl, QRectF
+from PyQt5.QtGui import QPainter, QColor, QFontDatabase, QFont, QPixmap, QPalette, QPen, QBrush, QPainterPath
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import QLabel, QApplication, QLineEdit, QFrame, QMainWindow, QTableWidget, QTableWidgetItem, \
-    QAbstractItemView, QComboBox, QSlider
+    QAbstractItemView, QComboBox, QSlider, QGraphicsDropShadowEffect
 
 from music import Song
 from music.netease import NSong
@@ -76,14 +76,13 @@ class PlayBar(QFrame):
         self.player = QMediaPlayer()
         self.cur_time = QLabel(self)
         self.total_time = QLabel(self)
-        self.lyric = QLabel()
+        self.lyric = Lyric()
         self.quality = QComboBox(self)
         self.volume_icon = AwesomeLabel(self, 'volume_icon', '\uf027', 40)
         self.volume = QSlider(self)
 
         self.music = NeteaseAPI()
         self.img = QLabel(self)
-        self.lyrics = None
         self.song = None
         self.init()
         self.signal_slot()
@@ -105,7 +104,6 @@ class PlayBar(QFrame):
         self.volume.setOrientation(Qt.Horizontal)
         self.volume.setGeometry(self.width() - 160, 10, 160, 40)
         self.quality.setGeometry(250, 40, 100, 20)
-        self.lyric.setGeometry(0, QApplication.desktop().height() - 200, QApplication.desktop().width(), 200)
 
     def init(self):
         """
@@ -120,11 +118,8 @@ class PlayBar(QFrame):
         self.song_info.setObjectName('song_info')
         self.cur_time.setObjectName('cur_time')
         self.total_time.setObjectName('total_time')
-        self.lyric.setText("音乐")
         font = QFont()
         font.setPixelSize(80)
-        self.lyric.setFont(font)
-        self.lyric.setObjectName("lyric")
         self.cur_time.setText("00:00")
         self.total_time.setText("00:00")
 
@@ -132,8 +127,6 @@ class PlayBar(QFrame):
         self.quality.addItem("高品质")
         self.quality.addItem("标准")
 
-        self.lyric.setWindowFlags(Qt.Tool | Qt.SubWindow | Qt.Popup | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.lyric.setAttribute(Qt.WA_TranslucentBackground)
         self.lyric.show()
 
         # self.setStyleSheet(style)
@@ -160,7 +153,7 @@ class PlayBar(QFrame):
             s = song.dt // 1000 - 60 * m
             self.total_time.setText("%02d:%02d" % (m, s))
             self.song_info.setText(song.name + "-" + song.artist[0].name)
-            self.lyrics = self.music.get_song_lyric_by_id(self.song.id).split("\n")
+            self.lyric.set_lyrics(self.music.get_song_lyric_by_id(self.song.id))
             self.process_bar.rate = 0
             download_mp3(song.url, song.name, self.download_music_update, self.download_music_finished)
             download_img(song.album.pic_url, song.album.name, None, self.download_head_img_finished)
@@ -183,24 +176,9 @@ class PlayBar(QFrame):
     def update_position(self, x):
         m = x // 1000 // 60
         s = x // 1000 - 60 * m
-        ms = x - 1000 * 60 * m - 1000 * s
-        lyric_index = 0
-        while lyric_index < len(self.lyrics):
-            line = self.lyrics[lyric_index]
-            result = re.search(r'\[(\d*):(\d*).(\d*)]', line)
-            if result is None:
-                lyric_index += 1
-            else:
-                time = int(result.group(1)) * 1000 * 60 + int(result.group(2)) * 1000 + int(result.group(3))
-                if time <= x + 0.2:
-                    line = line[line.index(']') + 1:]
-                    self.lyric.setText(line)
-                    lyric_index += 1
-                else:
-                    break
-
         self.cur_time.setText("%02d:%02d" % (m, s))
         self.process_bar.rate = x / self.song.dt
+        self.lyric.update_lyric(x)
         self.update()
 
     def download_music_update(self, x):
@@ -463,3 +441,129 @@ class SearchTable(QTableWidget):
 
     def play_clicked(self, name):
         self.play_song.emit(self.songs[int(name)])
+
+
+class Lyric(QFrame):
+    def __init__(self, parent=None):
+        super(QFrame, self).__init__(parent)
+        self.lyric = QLabel(self)
+        self.lyric2 = QLabel(self)
+        self.single_line = True
+        self.lock = False
+        self.enter = False
+        self.press = False
+        self.press_x = 0
+        self.press_y = 0
+
+        self.lyrics = None
+        self.init()
+
+    def init(self):
+        self.setGeometry(400, 800, 800, 80)
+        self.setObjectName('lyric_bar')
+        self.setWindowFlags(Qt.SubWindow | Qt.Popup | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setMouseTracking(True)
+        self.lyric.setObjectName('lyric')
+        self.lyric2.setObjectName('lyric2')
+        self.lyric2.hide()
+
+    def set_lyrics(self, lyric):
+        self.lyrics = lyric.split('\n')
+
+    def update_lyric(self, x):
+        lyric_index = 0
+        while lyric_index < len(self.lyrics):
+            line = self.lyrics[lyric_index]
+            result = re.search(r'\[(\d*):(\d*).(\d*)]', line)
+            if result is None:
+                lyric_index += 1
+            else:
+                time = int(result.group(1)) * 1000 * 60 + int(result.group(2)) * 1000 + int(result.group(3))
+                if time <= x + 0.2:
+                    line = line[line.index(']') + 1:]
+                    line2 = self.lyrics[lyric_index + 1]
+                    line2 = line2[line2.index(']') + 1:]
+                    if not self.single_line:
+                        if lyric_index % 2 == 0:
+                            self.lyric.setText(line)
+                            self.lyric.setStyleSheet('color: #00FF80;')
+                            self.lyric2.setText(line2)
+                            self.lyric2.setStyleSheet('color: #FF0080;')
+                        else:
+                            self.lyric2.setText(line)
+                            self.lyric2.setStyleSheet('color: #00FF80;')
+                            self.lyric.setText(line2)
+                            self.lyric.setStyleSheet('color: #FF0080;')
+
+                        self.update()
+                    else:
+                        self.lyric.setText(line)
+                    lyric_index += 1
+                else:
+                    break
+
+    def paintEvent(self, event):
+        p1 = 10
+        p2 = 20
+        if self.single_line:
+            self.lyric.setGeometry(p1, p2, self.width() - 2 * p1, self.height() - p1 - p2)
+            self.lyric.setAlignment(Qt.AlignCenter)
+            self.lyric2.hide()
+        else:
+            w = self.width() - 2 * p1
+            h = (self.height() - p1 - p2) / 2
+            self.lyric.setGeometry(p1, p2, w, h)
+            self.lyric.setAlignment(Qt.AlignLeft)
+            self.lyric2.setGeometry(p1, p2 + h, w, h)
+            self.lyric2.setAlignment(Qt.AlignRight)
+            self.lyric2.show()
+        font = QFont()
+        font.setPixelSize(self.lyric.height() * 0.8)
+        self.lyric.setFont(font)
+        self.lyric2.setFont(font)
+
+        if not self.lock:
+            if self.enter:
+                self.setCursor(Qt.OpenHandCursor)
+                painter = QPainter(self)
+                path = QPainterPath()
+                rect = QRectF(0, 0, self.width(), self.height())
+                path.addRoundedRect(rect, 10, 10)
+                painter.fillPath(path, QColor(0, 0, 0, 55))
+                pen = QPen()
+                pen.setWidth(2)
+                pen.setColor(QColor(255, 255, 255, 180))
+                painter.setPen(pen)
+                painter.drawRoundedRect(self.rect(), 10, 10)
+                painter.drawRoundedRect(3, 3, self.width() - 6, self.height() - 6, 8, 8)
+
+    def enterEvent(self, event):
+        self.enter = True
+        self.update()
+
+    def leaveEvent(self, event):
+        self.enter = False
+        self.update()
+
+    def resizeEvent(self, event):
+        self.enter = True
+
+    def mousePressEvent(self, event):
+        self.press = True
+        self.press_x = event.pos().x()
+        self.press_y = event.pos().y()
+
+    def mouseReleaseEvent(self, event):
+        self.press = False
+
+    def mouseMoveEvent(self, event):
+        if self.press:
+            dx = self.pos().x() + event.pos().x() - self.press_x
+            dy = self.pos().y() + event.pos().y() - self.press_y
+            self.setGeometry(dx, dy, self.width(), self.height())
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Space:
+            self.single_line = not self.single_line
+        self.update()

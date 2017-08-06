@@ -8,15 +8,22 @@ from music.netease.config import *
 from music.netease.encrypt import encrypted_request
 
 from music.netease.exception import *
+from http import cookiejar
 
 
 class NeteaseAPI:
     """
-    音乐爬虫
+    网易云音乐 API
     """
 
+    def __init__(self, timeout=60, proxy=None):
+        self.session = requests.session()
+        self.timeout = timeout
+        self.proxies = {'http': proxy, 'https': proxy}
+        self.session.cookies = cookiejar.LWPCookieJar(cookie_path)
+
     @exception
-    def post(self, url, data=None, headers=config.header):
+    def post(self, url, data=None, headers=header):
         """
         对data 进行加密的 POST 请求
         :param url: post url
@@ -24,18 +31,18 @@ class NeteaseAPI:
         :param headers: post 请求的头
         :return: post 请求返回的信息
         """
-        response = requests.post(url, data=encrypted_request(data), headers=headers)
+        response = self.session.post(url, data=encrypted_request(data), headers=headers, proxies=self.proxies)
         if response.status_code == 200:
             return response
         else:
             raise RequestException(response.status_code)
 
     @exception
-    def get(self, url, params=None, headers=config.header):
+    def get(self, url, params=None, headers=header):
         """
         Get 请求
         """
-        response = requests.get(url, params=params, headers=headers)
+        response = self.session.get(url, params=params, headers=headers, proxies=self.proxies)
         if response.status_code == 200:
             return response
         else:
@@ -50,7 +57,6 @@ class NeteaseAPI:
         :param limit:每页大小
         :return: json 数据类型的信息
         """
-        logging.info("搜索音乐:[类型:%s, 搜索内容:%s]" % (SearchType.str(_type), content))
         params = {'s': content, 'type': _type, 'offset': offset,
                   'sub': 'false', 'limit': limit}
         return self.post(search_url, params)
@@ -64,6 +70,7 @@ class NeteaseAPI:
         :param limit:每页大小
         :return: 搜索到的 json 数据类型的歌曲信息
         """
+        logging.info("搜索音乐:[搜索内容:%s, 偏移:%s, 页限制:%s]" % (content, offset, limit))
         result = json.loads(self.search(content, SearchType.song, offset, limit).text)
         if result['code'] == 200:
             result_songs = result['result']['songs']
@@ -95,6 +102,10 @@ class NeteaseAPI:
             return artists
         else:
             raise ParameterException(result['code'], result['msg'])
+
+    @exception
+    def search_albums(self, content, offset, limit=40):
+        result = json.loads(self.search(content, SearchType.album, offset, limit).text)
 
     @exception
     def get_song_url_by_id(self, _id):

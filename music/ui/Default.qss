@@ -19,14 +19,16 @@
 }
 
 #img {
-    border-width: 5px;
-    border-style: double;
-    border-color: #FFFFFF;
+    border: 5px double #FFFFFF;
 }
+
 SearchTable {
     background-color: #a0ffffff;
 }
 
 #lyric {
-    color:#8080FFFF;
+    color: #FF0080;
+}
+#lyric2 {
+    color: #00FF80;
 }
