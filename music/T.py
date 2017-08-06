@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QApplication
 from music.ui.components import MainWindow
 from music.ui import resource
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s (%(filename)s:%(lineno)d) [%(threadName)s]-[%(levelname)s]: %(message)s',)
 
 app = QApplication(sys.argv)

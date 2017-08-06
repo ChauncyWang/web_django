@@ -152,7 +152,7 @@ class PlayBar(QFrame):
             m = song.dt // 1000 // 60
             s = song.dt // 1000 - 60 * m
             self.total_time.setText("%02d:%02d" % (m, s))
-            self.song_info.setText(song.name + "-" + song.artist[0].name)
+            self.song_info.setText(song.name + "-" + str(song.artists))
             self.lyric.set_lyrics(self.music.get_song_lyric_by_id(self.song.id))
             self.process_bar.rate = 0
             download_mp3(song.url, song.name, self.download_music_update, self.download_music_finished)
@@ -432,7 +432,7 @@ class SearchTable(QTableWidget):
         self.setColumnWidth(3, 100)
         for i in range(0, len(self.songs)):
             self.setItem(i, 0, QTableWidgetItem(self.songs[i - 1].name))
-            self.setItem(i, 1, QTableWidgetItem(self.songs[i - 1].artist[0].name))
+            self.setItem(i, 1, QTableWidgetItem(self.songs[i - 1].artists[0].name))
             self.setItem(i, 2, QTableWidgetItem(self.songs[i - 1].album.name))
             if self.songs[i - 1].url is not None:
                 lab = AwesomeLabel(None, str(i - 1), "B", 15)

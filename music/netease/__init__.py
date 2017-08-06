@@ -1,4 +1,4 @@
-from music import Song, Album, Artist, Quality
+from music import Song, Album, Artist, Quality, Artists
 
 
 class NSong(Song):
@@ -8,14 +8,13 @@ class NSong(Song):
 
     def __init__(self, dic):
         super().__init__()
-        self.id = dic['id']
-        self.name = dic['name']
-        for i in dic['ar']:
-            self.artist.append(NArtist(i))
-        self.alias = dic['alia']
-        self.album = NAlbum(dic['al'])
-        self.mv = dic['mv']
-        self.dt = dic['dt']
+        self.id = dic.get('id')
+        self.name = dic.get('name')
+        self.artists = NArtists(dic.get('ar'))
+        self.alias = dic.get('alia')
+        self.album = NAlbum(dic.get('al'))
+        self.mv = dic.get('mv')
+        self.dt = dic.get('dt')
         self.url = None
 
     def __str__(self):
@@ -34,9 +33,18 @@ class NArtist(Artist):
 
     def __init__(self, dic):
         super().__init__()
-        self.id = dic['id']
-        self.name = dic['name']
-        self.alias = dic['alias']
+        self.id = dic.get('id')
+        self.name = dic.get('name')
+        self.alias = dic.get('alias')
+        self.img_url = dic.get('img1v1Url')
+
+
+class NArtists(Artists):
+    def __init__(self, dic):
+        super().__init__()
+        if dic is not None:
+            for t in dic:
+                self.append(NArtist(t))
 
 
 class NAlbum(Album):
@@ -46,11 +54,12 @@ class NAlbum(Album):
 
     def __init__(self, dic):
         super().__init__()
-        self.id = dic['id']
-        self.name = dic['name']
+        self.id = dic.get('id')
+        self.name = dic.get('name')
         self.type = dic.get('type')
         self.size = dic.get('size')
         self.pic_url = dic.get('picUrl')
+        self.artists = NArtists(dic.get('artists'))
 
 
 class NQuality(Quality):
@@ -60,8 +69,8 @@ class NQuality(Quality):
 
     def __init__(self, dic):
         super().__init__()
-        self.bit_rate = dic['br']
-        self.size = dic['size']
+        self.bit_rate = dic.get('br')
+        self.size = dic.get('size')
 
 
 class SearchType:

@@ -5,8 +5,11 @@ class Song:
 
     def __init__(self):
         self.name = None
-        self.artist = []
+        self.artists = None
         self.album = None
+
+    def __str__(self):
+        return '%s %s %s' % (self.name, self.artists, self.album)
 
 
 class Artist:
@@ -17,6 +20,9 @@ class Artist:
     def __init__(self):
         self.name = None
 
+    def __str__(self):
+        return self.name
+
 
 class Artists(list):
     def __init__(self):
@@ -25,7 +31,7 @@ class Artists(list):
     def __str__(self):
         s = ''
         for t in self:
-            if isinstance(Artist, t):
+            if isinstance(t, Artist):
                 s += t.name
                 s += '/'
 
@@ -40,6 +46,10 @@ class Album:
 
     def __init__(self):
         self.name = None
+        self.artists = None
+
+    def __str__(self):
+        return '%s,%s' % (self.name, str(self.artists))
 
 
 class Quality:

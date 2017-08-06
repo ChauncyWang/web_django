@@ -3,7 +3,7 @@ import logging
 
 import requests
 
-from music.netease import NSong, SearchType, NArtist, config
+from music.netease import NSong, SearchType, NArtist, config, NArtists, NAlbum
 from music.netease.config import *
 from music.netease.encrypt import encrypted_request
 
@@ -62,7 +62,7 @@ class NeteaseAPI:
         return self.post(search_url, params)
 
     @exception
-    def search_songs(self, content, offset, limit=20):
+    def search_songs(self, content, offset=0, limit=20):
         """
         搜索歌曲
         :param content: 搜索内容
@@ -84,7 +84,7 @@ class NeteaseAPI:
             raise ParameterException(result['code'], result['msg'])
 
     @exception
-    def search_artists(self, content, offset, limit=40):
+    def search_artists(self, content, offset=0, limit=40):
         """
         查询艺术家
         :param content: 要查询的内容
@@ -94,18 +94,21 @@ class NeteaseAPI:
         """
         result = json.loads(self.search(content, SearchType.artist, offset, limit).text)
         if result['code'] == 200:
-            result_artists = result['result']['artists']
-            artists = []
-            for artist in result_artists:
-                s = NArtist(artist)
-                artists.append(s)
-            return artists
+            return NArtists(result['result']['artists'])
         else:
             raise ParameterException(result['code'], result['msg'])
 
     @exception
-    def search_albums(self, content, offset, limit=40):
+    def search_albums(self, content, offset=0, limit=40):
         result = json.loads(self.search(content, SearchType.album, offset, limit).text)
+        if result['code'] == 200:
+            r = []
+            result = result['result']['albums']
+            for t in result:
+                r.append(NAlbum(t))
+            return r
+        else:
+            raise ParameterException(result['code'], result['msg'])
 
     @exception
     def get_song_url_by_id(self, _id):
@@ -114,7 +117,7 @@ class NeteaseAPI:
         :param _id:歌曲id
         :return:歌曲链接
         """
-        params = {'ids': [_id], 'br': 320000, 'csrf_token': ''}
+        params = {'ids': [_id], 'br': 32000, 'csrf_token': ''}
         response = self.post(song_url, params)
         response = json.loads(response.text)
         return response['data'][0]['url']
@@ -129,7 +132,7 @@ class NeteaseAPI:
         ids = []
         for song in songs:
             ids.append(song.id)
-        params = {'ids': ids, 'br': 320000, 'csrf_token': ''}
+        params = {'ids': ids, 'br': 32000, 'csrf_token': ''}
         response = self.post(song_url, params)
         response = json.loads(response.text)
         result = []
