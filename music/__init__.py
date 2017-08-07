@@ -12,6 +12,16 @@ class Song:
         return '%s %s %s' % (self.name, self.artists, self.album)
 
 
+class Songs(list):
+    def __str__(self):
+        s = ''
+        for t in self:
+            if isinstance(t, Song):
+                s += t.name
+                s += '/'
+        return s[:len(s) - 1]
+
+
 class Artist:
     """
     艺术家，演唱者，歌手

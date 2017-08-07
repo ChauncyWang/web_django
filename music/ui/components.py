@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QLabel, QApplication, QLineEdit, QFrame, QMainWindow
     QAbstractItemView, QComboBox, QSlider, QGraphicsDropShadowEffect
 
 from music import Song
-from music.netease import NSong
+from music.netease.models import *
 from music.netease.api import NeteaseAPI
 from music.ui.util import download_mp3, download_img
 
@@ -153,7 +153,7 @@ class PlayBar(QFrame):
             s = song.dt // 1000 - 60 * m
             self.total_time.setText("%02d:%02d" % (m, s))
             self.song_info.setText(song.name + "-" + str(song.artists))
-            self.lyric.set_lyrics(self.music.get_song_lyric_by_id(self.song.id))
+            self.lyric.set_lyrics(self.music.get_song_lyric(self.song.id))
             self.process_bar.rate = 0
             download_mp3(song.url, song.name, self.download_music_update, self.download_music_finished)
             download_img(song.album.pic_url, song.album.name, None, self.download_head_img_finished)
@@ -432,7 +432,7 @@ class SearchTable(QTableWidget):
         self.setColumnWidth(3, 100)
         for i in range(0, len(self.songs)):
             self.setItem(i, 0, QTableWidgetItem(self.songs[i - 1].name))
-            self.setItem(i, 1, QTableWidgetItem(self.songs[i - 1].artists[0].name))
+            self.setItem(i, 1, QTableWidgetItem(str(self.songs[i - 1].artists)))
             self.setItem(i, 2, QTableWidgetItem(self.songs[i - 1].album.name))
             if self.songs[i - 1].url is not None:
                 lab = AwesomeLabel(None, str(i - 1), "B", 15)

@@ -1,3 +1,4 @@
+import sqlite3
 import threading
 
 
@@ -44,3 +45,15 @@ class TaskThread(threading.Thread):
     def run(self):
         re = self.method(*self.args, **self.kwargs)
         self.handle(re)
+
+
+def dict_adapter(dic, *args):
+    result = None
+    for arg in args:
+        if result is None:
+            result = dic.get(arg)
+    return result
+
+
+def load_db_config():
+    sqlite3.connect()

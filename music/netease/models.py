@@ -1,4 +1,5 @@
-from music import Song, Album, Artist, Quality, Artists
+from music import Song, Album, Artist, Quality, Artists, Songs
+from music.util import dict_adapter
 
 
 class NSong(Song):
@@ -10,20 +11,28 @@ class NSong(Song):
         super().__init__()
         self.id = dic.get('id')
         self.name = dic.get('name')
-        self.artists = NArtists(dic.get('ar'))
-        self.alias = dic.get('alia')
-        self.album = NAlbum(dic.get('al'))
+        self.artists = NArtists(dict_adapter(dic, 'ar', 'artist', 'artists'))
+        alias = dic.get('alia')
+        alias1 = dic.get('alias')
+        self.alias = alias1 if alias is None else alias
+        self.album = NAlbum(dict_adapter(dic, 'al', 'album', 'albums'))
         self.mv = dic.get('mv')
-        self.dt = dic.get('dt')
+        dt = dic.get('dt')
+        dt1 = dic.get('duration')
+        self.dt = dt1 if dt is None else dt
         self.url = None
 
     def __str__(self):
-        s = "  "
-        for art in self.artist:
-            s += art.name
         min = self.dt // 1000 // 60
         sec = self.dt // 1000 - min * 60
-        return "%s-%s\n%s\n%s\n%02d:%02d" % (self.name, self.alias, s, self.album.name, min, sec)
+        return "%-s %s %s %02d:%02d" % (self.name, self.artists, self.album.name, min, sec)
+
+
+class NSongs(Songs):
+    def __init__(self, dict):
+        super().__init__()
+        for t in dict:
+            self.append(NSong(t))
 
 
 class NArtist(Artist):

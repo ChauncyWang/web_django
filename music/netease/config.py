@@ -1,5 +1,6 @@
 import os
 
+# ras 加密参数
 modulus = "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68" \
           "ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee3" \
           "41f56135fccf695280104e0312ecbda92557c93870114af6c9d" \
@@ -8,9 +9,12 @@ modulus = "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68" \
 nonce = "0CoJUm6Qyw8W8jud"
 pub_key = "010001"
 
+# api 相关 url
 search_url = "http://music.163.com/weapi/cloudsearch/get/web?csrf_token="
 song_url = 'http://music.163.com/weapi/song/enhance/player/url?csrf_token='
 lyric_url = 'http://music.163.com/api/song/lyric'
+toplist_url = 'http://music.163.com/discover/toplist'
+
 
 header = {
     "Host": "music.163.com",

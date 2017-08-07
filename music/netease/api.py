@@ -1,9 +1,10 @@
 import json
 import logging
 
+import re
 import requests
 
-from music.netease import NSong, SearchType, NArtist, config, NArtists, NAlbum
+from music.netease.models import *
 from music.netease.config import *
 from music.netease.encrypt import encrypted_request
 
@@ -74,11 +75,9 @@ class NeteaseAPI:
         result = json.loads(self.search(content, SearchType.song, offset, limit).text)
         if result['code'] == 200:
             result_songs = result['result']['songs']
-            songs = []
-            for song in result_songs:
-                s = NSong(song)
-                s.url = self.get_song_url_by_id(s.id)
-                songs.append(s)
+            songs = NSongs(result_songs)
+            for s in songs:
+                s.url = self.get_song_url(s.id)
             return songs
         else:
             raise ParameterException(result['code'], result['msg'])
@@ -111,28 +110,27 @@ class NeteaseAPI:
             raise ParameterException(result['code'], result['msg'])
 
     @exception
-    def get_song_url_by_id(self, _id):
+    def get_song_url(self, _id, br=320000):
         """
         根据歌曲id获取播放链接
         :param _id:歌曲id
+        :param br:歌曲品质
         :return:歌曲链接
         """
-        params = {'ids': [_id], 'br': 32000, 'csrf_token': ''}
+        params = {'ids': [_id], 'br': br, 'csrf_token': ''}
         response = self.post(song_url, params)
         response = json.loads(response.text)
         return response['data'][0]['url']
 
     @exception
-    def get_songs_url_by_songs(self, songs):
+    def get_songs_url(self, ids, br=320000):
         """
         根据歌曲列表获取列表内歌曲的链接
-        :param songs: 歌曲列表
+        :param ids: 歌曲 id 列表
+        :param br:歌曲品质
         :return: 链接列表
         """
-        ids = []
-        for song in songs:
-            ids.append(song.id)
-        params = {'ids': ids, 'br': 32000, 'csrf_token': ''}
+        params = {'ids': ids, 'br': br, 'csrf_token': ''}
         response = self.post(song_url, params)
         response = json.loads(response.text)
         result = []
@@ -141,7 +139,7 @@ class NeteaseAPI:
         return result
 
     @exception
-    def get_song_lyric_by_id(self, _id):
+    def get_song_lyric(self, _id):
         """
         根据歌曲id获取歌词
         :param _id: 歌曲id
@@ -150,4 +148,39 @@ class NeteaseAPI:
         params = {'id': _id, 'lv': -1, 'kv': -1, 'tv': -1}
         result = self.get(lyric_url, params)
         result = json.loads(result.text)
-        return result['lrc']['lyric']
+        try:
+            return result['lrc']['lyric']
+        except:
+            return None
+
+    @exception
+    def get_toplist(self):
+        """
+        获取各个榜单的信息
+        :return:榜单列表
+        """
+        ret = []
+        result = self.get(toplist_url).text
+        patt = r'<h2 class=".*?f-ff1"?>(.*?)</h2>\s*<ul class="f-cb">([\s\S]*?)</ul>'
+        for i in re.findall(patt, result):
+            dic = {'title': i[0], 'toplist': []}
+            patt = r'<a class="avatar" href=".*?id=(.*?)">\s*?<img src="(.*?)"\s*?alt="(.*?)"/>'
+            l = re.findall(patt, i[1])
+            for j in l:
+                subs = {'id': j[0], 'img_url': j[1], 'name': j[2]}
+                dic['toplist'].append(subs)
+            ret.append(dic)
+        return ret
+
+    @exception
+    def get_toplist_songs(self, toplist_id):
+        """
+        根据榜单 id 获取榜单所拥有的歌曲
+        :param toplist_id: 榜单 id
+        :return: 歌单
+        """
+        resp = self.get(toplist_url, {'id': toplist_id}).text
+        patt = '<textarea style="display:none;">(.*?)</textarea>'
+        result = json.loads(re.search(patt, resp).group(1))
+        for i in result:
+            s = NSong(i)
