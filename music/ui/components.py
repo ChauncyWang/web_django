@@ -105,7 +105,7 @@ class PlayBar(QFrame):
         self.volume_icon.setGeometry(self.width() - 200, 10, 40, 40)
         self.volume.setOrientation(Qt.Horizontal)
         self.volume.setGeometry(self.width() - 160, 10, 160, 40)
-        self.quality.setGeometry(250, 40, 100, 20)
+        self.quality.setGeometry(250, 40, 40, 18)
 
     def init(self):
         """
@@ -128,6 +128,9 @@ class PlayBar(QFrame):
         self.quality.addItem("ＨＱ")
         self.quality.addItem("ＳＱ")
         self.quality.addItem("标准")
+        f = QFont()
+        f.setPixelSize(8)
+        self.quality.setFont(f)
 
         self.lyric.show()
 
@@ -475,10 +478,10 @@ class PlayButton(ClickableLabel):
 
     def paintEvent(self, event):
         # 计算绘制位置
-        r1, r2, b = self.size / 2, self.size / 4, self.size / 15
+        r1, r2, b = self.size / 2, self.size / 6, self.size / 15
         d = r1 - r2
         rect1 = QRect(b / 2, b / 2, r1 * 2 - b, r1 * 2 - b)
-        rect2 = QRect(d + self.offset, d, d * 2, d * 2)
+        rect2 = QRect(d + self.offset, d, r2 * 2, r2 * 2)
         painter = QPainter(self)
         # 消除走样
         painter.setRenderHint(QPainter.Antialiasing)
@@ -650,3 +653,11 @@ class ProgressBar(QFrame):
             painter.setBrush(load_color)
             rect = QRect(d_r, d_r, w * self.rate + 2 * self.in_radius, self.in_radius * 2)
             painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
+
+
+class Com(QComboBox):
+
+    def paintEvent(self, event):
+        self.thread()
+
+# http://www.cnblogs.com/findumars/p/5618696.html
