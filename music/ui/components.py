@@ -125,8 +125,8 @@ class PlayBar(QFrame):
         self.cur_time.setText("00:00")
         self.total_time.setText("00:00")
 
-        self.quality.addItem("Q ")
-        self.quality.addItem("S Q ")
+        self.quality.addItem("ＨＱ")
+        self.quality.addItem("ＳＱ")
         self.quality.addItem("标准")
 
         self.lyric.show()
