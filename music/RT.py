@@ -28,7 +28,9 @@ def test2():
 
 def test_time_label():
     app = QApplication(sys.argv)
-    a = PlayButtonGroup()
+    a = ProgressGroup()
+    a.slot_total_time(1000000)
+    a.slot_cur_time(100000)
     a.show()
     sys.exit(app.exec_())
 

@@ -1,6 +1,8 @@
 from PyQt5.QtGui import QColor
 
-foreground_color = QColor.fromRgba(0x8000FFFF)
+theme_color = '8000FFFF'
+
+foreground_color = QColor.fromRgba(int(theme_color, 16))
 base_color = QColor(255, 255, 255)
 load_color = QColor(200, 200, 200)
 in_color = foreground_color
@@ -12,3 +14,9 @@ playbar_h = 60
 playbar_playbtns_w = 180
 playbar_playbtns_big = 50
 playbar_playbtns_small = 30
+
+# ProgressBar
+# 进度点内圆半径
+playbar_progress_ir = 1
+# 进度点外圆半径
+playbar_progress_or = 4

@@ -4,7 +4,7 @@ import re
 from PyQt5.QtCore import QRect, Qt, pyqtSignal, QUrl, QRectF
 from PyQt5.QtGui import QPainter, QColor, QFontDatabase, QFont, QPixmap, QPalette, QPen, QBrush, QPainterPath, \
     QFontMetrics
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QMediaPlaylist
 from PyQt5.QtWidgets import QLabel, QApplication, QLineEdit, QFrame, QMainWindow, QTableWidget, QTableWidgetItem, \
     QAbstractItemView, QComboBox, QSlider, QGraphicsDropShadowEffect
 
@@ -73,11 +73,9 @@ class PlayBar(QFrame):
         super().__init__(parent)
         QFontDatabase.addApplicationFont(os.path.dirname(__file__) + '/res/font/fontawesome-webfont.ttf')
         self.play_buttons = PlayButtonGroup(self)
-        self.process_bar = ProgressBar(self)
+        self.process_bar = ProgressGroup(self)
         self.song_info = QLabel(self)
         self.player = QMediaPlayer()
-        self.cur_time = QLabel(self)
-        self.total_time = QLabel(self)
         self.lyric = Lyric()
         self.quality = QComboBox(self)
         self.volume_icon = AwesomeLabel(self, 'volume_icon', '\uf027', 40)
@@ -93,15 +91,7 @@ class PlayBar(QFrame):
         self.play_buttons.setGeometry(0, 0, 0, 0)
         self.img.setGeometry(180, 0, 60, 60)
         self.song_info.setGeometry(250, 0, 200, 30)
-        font = QFont()
-        font.setPixelSize(12)
-        self.cur_time.setGeometry(260, 30, 40, 10)
-        self.cur_time.setFont(font)
-        self.cur_time.setAlignment(Qt.AlignCenter)
-        self.process_bar.setGeometry(300, 30, self.width() - 300 - 200 - 40, 10)
-        self.total_time.setGeometry(self.width() - 200 - 40, 30, 40, 10)
-        self.total_time.setFont(font)
-        self.total_time.setAlignment(Qt.AlignCenter)
+        self.process_bar.setGeometry(250, 30, self.width() - 300 - 200 - 40, 0)
         self.volume_icon.setGeometry(self.width() - 200, 10, 40, 40)
         self.volume.setOrientation(Qt.Horizontal)
         self.volume.setGeometry(self.width() - 160, 10, 160, 40)
@@ -118,12 +108,6 @@ class PlayBar(QFrame):
         """
         self.img.setObjectName('img')
         self.song_info.setObjectName('song_info')
-        self.cur_time.setObjectName('cur_time')
-        self.total_time.setObjectName('total_time')
-        font = QFont()
-        font.setPixelSize(80)
-        self.cur_time.setText("00:00")
-        self.total_time.setText("00:00")
 
         self.quality.addItem("ＨＱ")
         self.quality.addItem("ＳＱ")
@@ -142,7 +126,7 @@ class PlayBar(QFrame):
         """
         self.play_buttons.signal_play.connect(self.play_pause)
         self.player.positionChanged.connect(self.update_position)
-        self.process_bar.rate_changed.connect(self.set_position)
+        self.process_bar.signal_rate_changed.connect(self.set_position)
         self.volume.valueChanged.connect(self.player.setVolume)
 
     def set_song(self, song):
@@ -154,9 +138,8 @@ class PlayBar(QFrame):
             self.player.stop()
             self.process_bar.loaded = False
             self.song = song
-            m = song.dt // 1000 // 60
-            s = song.dt // 1000 - 60 * m
-            self.total_time.setText("%02d:%02d" % (m, s))
+            self.process_bar.slot_cur_time(0)
+            self.process_bar.slot_total_time(song.dt)
             self.song_info.setText(song.name + "-" + str(song.artists))
             self.lyric.set_lyrics(self.music.get_song_lyric(self.song.id))
             self.process_bar.rate = 0
@@ -176,10 +159,7 @@ class PlayBar(QFrame):
             self.player.play()
 
     def update_position(self, x):
-        m = x // 1000 // 60
-        s = x // 1000 - 60 * m
-        self.cur_time.setText("%02d:%02d" % (m, s))
-        self.process_bar.rate = x / self.song.dt
+        self.process_bar.slot_cur_time(x)
         self.lyric.update_lyric(x)
         self.update()
 
@@ -197,7 +177,7 @@ class PlayBar(QFrame):
         :param file_name: 歌曲存储位置
         """
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_name)))
-        self.process_bar.loaded = True
+        self.process_bar.slot_loaded(True)
         self.player.play()
 
     def download_head_img_finished(self, file_name):
@@ -475,25 +455,9 @@ class PlayButton(ClickableLabel):
         self.size = size
         self.offset = offset
         self.setFixedSize(size, size)
-
-    def paintEvent(self, event):
-        # 计算绘制位置
-        r1, r2, b = self.size / 2, self.size / 6, self.size / 15
-        d = r1 - r2
-        rect1 = QRect(b / 2, b / 2, r1 * 2 - b, r1 * 2 - b)
-        rect2 = QRect(d + self.offset, d, r2 * 2, r2 * 2)
-        painter = QPainter(self)
-        # 消除走样
-        painter.setRenderHint(QPainter.Antialiasing)
-        # 设置字体
-        font = QFont('fontawesome')
-        font.setPixelSize(r1)
-        painter.setFont(font)
-        # 设置画笔
-        painter.setPen(QPen(foreground_color, b))
-        # 绘制
-        painter.drawEllipse(rect1)
-        painter.drawText(rect2, Qt.AlignCenter, self.text())
+        self.setStyleSheet("color:#00aaaf;border: 2px solid #00aaaf;border-radius:%dpx;padding-left:%dpx" % (
+            self.width() / 2, self.offset))
+        self.setAlignment(Qt.AlignCenter)
 
 
 class PlayButtonGroup(QFrame):
@@ -566,12 +530,7 @@ class ProgressBar(QFrame):
     进度条
     """
     # 进度条被鼠标点击、拖拽产生的信号
-    click = pyqtSignal(float)
-    rate_changed = pyqtSignal(float)
-    # 进度点内圆半径
-    in_radius = 1
-    # 进度点外圆半径
-    out_radius = 4
+    signal_rate_changed = pyqtSignal(float)
 
     # 进度拖动点击的信号
     def __init__(self, parent=None):
@@ -586,54 +545,62 @@ class ProgressBar(QFrame):
         self.rate = 0
         # 是否加载完成
         self.loaded = False
-
+        self.in_radius = playbar_progress_ir
+        self.out_radius = playbar_progress_or
+        # 一直监听鼠标事件
         self.setMouseTracking(True)
 
-    def mousePressEvent(self, event):
-        self.clicked = True
-        self.update_rate(event)
-
-    def mouseMoveEvent(self, event):
-        if self.clicked:
-            self.update_rate(event)
-
-    def mouseReleaseEvent(self, event):
-        self.clicked = False
-
-    def update_rate(self, event):
+    def calc_rate(self, event):
         """
-        更新进度比率
+        更新进度
         :param event:鼠标点击事件的参数
         """
         x = event.x()
         if x > self.out_radius and self.loaded:
             if x < self.width() - self.out_radius:
                 self.rate = (x - self.out_radius) / (self.width() - 2 * self.out_radius)
-                self.click.emit(self.rate)
-                self.rate_changed.emit(self.rate)
+                self.signal_rate_changed.emit(self.rate)
                 self.update()
+
+    def mousePressEvent(self, event):
+        self.clicked = True
+        self.calc_rate(event)
+
+    def mouseMoveEvent(self, event):
+        if self.clicked:
+            self.calc_rate(event)
+
+    def mouseReleaseEvent(self, event):
+        self.clicked = False
 
     def paintEvent(self, event):
         """
         重写绘制事件，自己绘图
         :param event: 绘图事件
         """
-        painter = QPainter(self)
-        painter.setRenderHints(QPainter.SmoothPixmapTransform | QPainter.Antialiasing)
-
         d_r = self.out_radius - self.in_radius
         w = self.width() - 2 * self.out_radius
+
+        painter = QPainter(self)
+        painter.setRenderHints(QPainter.SmoothPixmapTransform | QPainter.Antialiasing)
         if self.loaded:
-            # 绘制进度条基础
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(load_color)
-            rect = QRect(d_r, d_r, w + 2 * self.in_radius, self.in_radius * 2)
-            painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
-            # 绘制进度条当前长度
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(in_color)
-            rect = QRect(d_r, d_r, w * self.rate + 2 * self.in_radius, self.in_radius * 2)
-            painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
+            color1 = load_color
+            color2 = in_color
+        else:
+            color1 = base_color
+            color2 = load_color
+        # 绘制进度条基础
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(color1)
+        rect = QRect(d_r, d_r, w + 2 * self.in_radius, self.in_radius * 2)
+        painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
+        # 绘制加载进度条
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(color2)
+        rect = QRect(d_r, d_r, w * self.rate + 2 * self.in_radius, self.in_radius * 2)
+        painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
+
+        if self.loaded:
             # 绘制进度条节点外圆
             painter.setPen(Qt.NoPen)
             painter.setBrush(out_color)
@@ -642,22 +609,80 @@ class ProgressBar(QFrame):
             painter.setPen(Qt.NoPen)
             painter.setBrush(in_color)
             painter.drawEllipse(w * self.rate + d_r, d_r, 2 * self.in_radius, 2 * self.in_radius)
-        else:
-            # 绘制进度条基础
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(base_color)
-            rect = QRect(d_r, d_r, w + 2 * self.in_radius, self.in_radius * 2)
-            painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
-            # 绘制加载进度条
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(load_color)
-            rect = QRect(d_r, d_r, w * self.rate + 2 * self.in_radius, self.in_radius * 2)
-            painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
 
 
 class Com(QComboBox):
-
     def paintEvent(self, event):
         self.thread()
 
-# http://www.cnblogs.com/findumars/p/5618696.html
+        # http://www.cnblogs.com/findumars/p/5618696.html
+
+
+class ProgressGroup(QFrame):
+    signal_rate_changed = pyqtSignal(float)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.c_time = 0
+        self.t_time = 0
+
+        self.progress_bar = ProgressBar(self)
+        self.cur_time = QLabel(self)
+        self.total_time = QLabel(self)
+
+        fm = self.cur_time.fontMetrics()
+        self.w, self.h = fm.width('00000'), fm.height()
+
+        self.init_components()
+        self.signal_slot()
+
+    def init_components(self):
+        """ 初始化组件 """
+        style = "color:#80FFFFFF;"
+        self.setMinimumHeight(self.h)
+        self.cur_time.setText('00:00')
+        self.cur_time.setAlignment(Qt.AlignCenter)
+        self.total_time.setText('00:00')
+        self.total_time.setAlignment(Qt.AlignCenter)
+        self.setStyleSheet(style)
+
+    def signal_slot(self):
+        """ 连接信号和槽 """
+        self.progress_bar.signal_rate_changed.connect(self.signal_rate_changed.emit)
+
+    def slot_cur_time(self, x):
+        """ 更新当前时间 """
+        m = x // 1000 // 60
+        s = x // 1000 - 60 * m
+        self.cur_time.setText("%02d:%02d" % (m, s))
+
+    def slot_total_time(self, x):
+        """ 更新总时间 """
+        m = x // 1000 // 60
+        s = x // 1000 - 60 * m
+        self.total_time.setText("%02d:%02d" % (m, s))
+
+    def slot_loaded(self, loaded):
+        """ 更新加载状态 """
+        self.progress_bar.loaded = loaded
+
+    def resizeEvent(self, event):
+        # 设置两个标签大小
+        self.cur_time.setGeometry(0, 0, self.w, self.h)
+        self.total_time.setGeometry(self.width() - self.w, 0, self.w, self.h)
+        # 设置进度条的大小
+        r = self.progress_bar.out_radius
+        self.progress_bar.setGeometry(self.w, self.h / 2 - r, self.width() - self.w * 2, r * 2)
+
+
+class Player:
+    def __init__(self):
+        self.player = QMediaPlayer()
+        self.list = []
+
+    def slot_next(self):
+        pass
+
+    def slot_pre(self):
+        pass
