@@ -1,6 +1,9 @@
 import json
 from http import cookiejar
 
+import re
+
+import os
 import requests
 
 from music.qq.config import search_url, key_url, play_url

@@ -2,7 +2,8 @@ import os
 import re
 
 from PyQt5.QtCore import QRect, Qt, pyqtSignal, QUrl, QRectF
-from PyQt5.QtGui import QPainter, QColor, QFontDatabase, QFont, QPixmap, QPalette, QPen, QBrush, QPainterPath
+from PyQt5.QtGui import QPainter, QColor, QFontDatabase, QFont, QPixmap, QPalette, QPen, QBrush, QPainterPath, \
+    QFontMetrics
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import QLabel, QApplication, QLineEdit, QFrame, QMainWindow, QTableWidget, QTableWidgetItem, \
     QAbstractItemView, QComboBox, QSlider, QGraphicsDropShadowEffect
@@ -10,6 +11,7 @@ from PyQt5.QtWidgets import QLabel, QApplication, QLineEdit, QFrame, QMainWindow
 from music import Song
 from music.netease.models import *
 from music.netease.api import NeteaseAPI
+from music.ui.config import *
 from music.ui.util import download_mp3, download_img
 
 """
@@ -70,7 +72,7 @@ class PlayBar(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         QFontDatabase.addApplicationFont(os.path.dirname(__file__) + '/res/font/fontawesome-webfont.ttf')
-        self.play_buttons = PlayButtons(self)
+        self.play_buttons = PlayButtonGroup(self)
         self.process_bar = ProgressBar(self)
         self.song_info = QLabel(self)
         self.player = QMediaPlayer()
@@ -88,7 +90,7 @@ class PlayBar(QFrame):
         self.signal_slot()
 
     def paintEvent(self, event):
-        self.play_buttons.setGeometry(0, 0, 160, self.height())
+        self.play_buttons.setGeometry(0, 0, 0, 0)
         self.img.setGeometry(180, 0, 60, 60)
         self.song_info.setGeometry(250, 0, 200, 30)
         font = QFont()
@@ -123,8 +125,8 @@ class PlayBar(QFrame):
         self.cur_time.setText("00:00")
         self.total_time.setText("00:00")
 
-        self.quality.addItem("超高品质")
-        self.quality.addItem("高品质")
+        self.quality.addItem("Q ")
+        self.quality.addItem("S Q ")
         self.quality.addItem("标准")
 
         self.lyric.show()
@@ -135,7 +137,7 @@ class PlayBar(QFrame):
         """
         进行信号和槽的链接
         """
-        self.play_buttons.play.clicked.connect(self.play_pause)
+        self.play_buttons.signal_play.connect(self.play_pause)
         self.player.positionChanged.connect(self.update_position)
         self.process_bar.rate_changed.connect(self.set_position)
         self.volume.valueChanged.connect(self.player.setVolume)
@@ -160,18 +162,15 @@ class PlayBar(QFrame):
             self.player.play()
             self.update()
 
-    def play_pause(self):
+    def play_pause(self, playing):
         """
         播放/暂停切换的槽
         """
-        self.play_buttons.playing = not self.play_buttons.playing
-        if self.play_buttons.playing:
-            self.play_buttons.play.setText("\uf04b")
-            self.player.play()
-        else:
-            self.play_buttons.play.setText("\uf04c")
+        self.play_buttons.playing = playing
+        if playing:
             self.player.pause()
-        self.update()
+        else:
+            self.player.play()
 
     def update_position(self, x):
         m = x // 1000 // 60
@@ -215,123 +214,6 @@ class PlayBar(QFrame):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space:
             self.play_pause()
-
-
-class ProgressBar(QFrame):
-    """
-    进度条
-    """
-    # 进度条被鼠标点击、拖拽产生的信号
-    click = pyqtSignal(float)
-    rate_changed = pyqtSignal(float)
-    # 进度点内圆半径
-    in_radius = 1
-    # 进度点外圆半径
-    out_radius = 4
-
-    # 进度拖动点击的信号
-    def __init__(self, parent=None):
-        """
-        初始化
-        :param parent: 父窗体
-        """
-        super().__init__(parent)
-        # 是否鼠标点击了，拖拽事件时调用
-        self.clicked = False
-        # 当前进度
-        self.rate = 0
-        # 是否加载完成
-        self.loaded = False
-
-        self.setMouseTracking(True)
-
-    def mousePressEvent(self, event):
-        self.clicked = True
-        self.update_rate(event)
-
-    def mouseMoveEvent(self, event):
-        if self.clicked:
-            self.update_rate(event)
-
-    def mouseReleaseEvent(self, event):
-        self.clicked = False
-
-    def update_rate(self, event):
-        """
-        更新进度比率
-        :param event:鼠标点击事件的参数
-        """
-        x = event.x()
-        if x > self.out_radius and self.loaded:
-            if x < self.width() - self.out_radius:
-                self.rate = (x - self.out_radius) / (self.width() - 2 * self.out_radius)
-                self.click.emit(self.rate)
-                self.rate_changed.emit(self.rate)
-                self.update()
-
-    def paintEvent(self, event):
-        """
-        重写绘制事件，自己绘图
-        :param event: 绘图事件
-        """
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform)
-        painter.setRenderHint(QPainter.Antialiasing)
-        base_color = QColor(255, 255, 255)
-        load_color = QColor(200, 200, 200)
-        in_color = QColor(214, 124, 103)
-        out_color = QColor(255, 255, 255)
-
-        d_r = self.out_radius - self.in_radius
-        w = self.width() - 2 * self.out_radius
-        if self.loaded:
-            # 绘制进度条基础
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(load_color)
-            rect = QRect(d_r, d_r, w + 2 * self.in_radius, self.in_radius * 2)
-            painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
-            # 绘制进度条当前长度
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(in_color)
-            rect = QRect(d_r, d_r, w * self.rate + 2 * self.in_radius, self.in_radius * 2)
-            painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
-            # 绘制进度条节点外圆
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(out_color)
-            painter.drawEllipse(w * self.rate, 0, 2 * self.out_radius, 2 * self.out_radius)
-            # 绘制进度条节点内圆
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(in_color)
-            painter.drawEllipse(w * self.rate + d_r, d_r, 2 * self.in_radius, 2 * self.in_radius)
-        else:
-            # 绘制进度条基础
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(base_color)
-            rect = QRect(d_r, d_r, w + 2 * self.in_radius, self.in_radius * 2)
-            painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
-            # 绘制加载进度条
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(load_color)
-            rect = QRect(d_r, d_r, w * self.rate + 2 * self.in_radius, self.in_radius * 2)
-            painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
-
-
-class PlayButtons(QFrame):
-    style = "#left,#right {color:#AFAFAF;}" \
-            "#play,#left:hover,#right:hover,#play:hover {color:#FFFFFF;}"
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        # http://www.bootcss.com/p/font-awesome/design.html
-        self.left = AwesomeLabel(self, "left", '\uf048', 15)
-        self.left.setGeometry(20, 10, 40, 40)
-        self.play = AwesomeLabel(self, "play", '\uf04b', 24)
-        self.play.setGeometry(65, 0, 60, 60)
-        self.right = AwesomeLabel(self, "right", "\uf051", 15)
-        self.right.setGeometry(120, 10, 40, 40)
-        self.setStyleSheet(self.style)
-        self.playing = True
-        self.update()
 
 
 class TitleBar(QFrame):
@@ -567,3 +449,204 @@ class Lyric(QFrame):
         if event.key() == Qt.Key_Space:
             self.single_line = not self.single_line
         self.update()
+
+
+class PlayButton(ClickableLabel):
+    PLAY = 1
+    PAUSE = 2
+    PRE = 3
+    NEXT = 4
+    texts = {PLAY: '\uf04b', PAUSE: '\uf04c', PRE: '\uf048', NEXT: '\uf051', }
+
+    @staticmethod
+    def new_label(kind, parent, size):
+        if kind == PlayButton.PLAY:
+            label = PlayButton(size, parent, size // 20)
+        else:
+            label = PlayButton(size, parent)
+        label.setText(PlayButton.texts[kind])
+        return label
+
+    def __init__(self, size, parent=None, offset=0):
+        super().__init__(parent)
+        self.size = size
+        self.offset = offset
+        self.setFixedSize(size, size)
+
+    def paintEvent(self, event):
+        # 计算绘制位置
+        r1, r2, b = self.size / 2, self.size / 4, self.size / 15
+        d = r1 - r2
+        rect1 = QRect(b / 2, b / 2, r1 * 2 - b, r1 * 2 - b)
+        rect2 = QRect(d + self.offset, d, d * 2, d * 2)
+        painter = QPainter(self)
+        # 消除走样
+        painter.setRenderHint(QPainter.Antialiasing)
+        # 设置字体
+        font = QFont('fontawesome')
+        font.setPixelSize(r1)
+        painter.setFont(font)
+        # 设置画笔
+        painter.setPen(QPen(foreground_color, b))
+        # 绘制
+        painter.drawEllipse(rect1)
+        painter.drawText(rect2, Qt.AlignCenter, self.text())
+
+
+class PlayButtonGroup(QFrame):
+    """ 播放相关的按钮组 """
+    # 播放信号
+    signal_play = pyqtSignal(bool)
+    # 上一曲信号
+    signal_pre = pyqtSignal()
+    # 下一曲信号
+    signal_next = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        b, s = playbar_playbtns_big, playbar_playbtns_small
+        self.cl_play = PlayButton.new_label(PlayButton.PLAY, self, b)
+        self.cl_pause = PlayButton.new_label(PlayButton.PAUSE, self, b)
+        self.cl_pre = PlayButton.new_label(PlayButton.PRE, self, s)
+        self.cl_next = PlayButton.new_label(PlayButton.NEXT, self, s)
+        self.playing = False
+        self.init_components()
+        self.signal_slot()
+
+    def init_components(self):
+        """ 初始化组件 """
+        self.setFixedSize(playbar_playbtns_w, playbar_h)
+        w, h = self.width(), self.height()
+        b, s = playbar_playbtns_big, playbar_playbtns_small
+        rect1 = QRect((w - b) / 2, (h - b) / 2, b, b)
+        rect2 = QRect((w - b) / 2 - s - 5, (h - s) / 2, s, s)
+        rect3 = QRect(w / 2 + b / 2 + 5, (h - s) / 2, s, s)
+        self.cl_play.setGeometry(rect1)
+        self.cl_pause.setGeometry(rect1)
+        self.cl_pre.setGeometry(rect2)
+        self.cl_next.setGeometry(rect3)
+
+    def signal_slot(self):
+        """ 连接信号和槽 """
+        self.cl_play.clicked.connect(self.slot_play_pause)
+        self.cl_pause.clicked.connect(self.slot_play_pause)
+        self.cl_pre.clicked.connect(self.slot_pre)
+        self.cl_next.clicked.connect(self.slot_next)
+
+    def paintEvent(self, event):
+        """ 重绘 """
+        # 根据播放状态选择显示的控件
+        if self.playing:
+            self.cl_play.show()
+            self.cl_pause.hide()
+        else:
+            self.cl_pause.show()
+            self.cl_play.hide()
+
+    def slot_play_pause(self):
+        """ 播放/暂停 连接的槽 """
+        self.playing = not self.playing
+        self.update()
+        self.signal_play.emit(self.playing)
+
+    def slot_pre(self):
+        """ 上一曲 连接的槽 """
+        self.signal_pre.emit()
+
+    def slot_next(self):
+        """ 下一曲 连接的槽 """
+        self.signal_next.emit()
+
+
+class ProgressBar(QFrame):
+    """
+    进度条
+    """
+    # 进度条被鼠标点击、拖拽产生的信号
+    click = pyqtSignal(float)
+    rate_changed = pyqtSignal(float)
+    # 进度点内圆半径
+    in_radius = 1
+    # 进度点外圆半径
+    out_radius = 4
+
+    # 进度拖动点击的信号
+    def __init__(self, parent=None):
+        """
+        初始化
+        :param parent: 父窗体
+        """
+        super().__init__(parent)
+        # 是否鼠标点击了，拖拽事件时调用
+        self.clicked = False
+        # 当前进度
+        self.rate = 0
+        # 是否加载完成
+        self.loaded = False
+
+        self.setMouseTracking(True)
+
+    def mousePressEvent(self, event):
+        self.clicked = True
+        self.update_rate(event)
+
+    def mouseMoveEvent(self, event):
+        if self.clicked:
+            self.update_rate(event)
+
+    def mouseReleaseEvent(self, event):
+        self.clicked = False
+
+    def update_rate(self, event):
+        """
+        更新进度比率
+        :param event:鼠标点击事件的参数
+        """
+        x = event.x()
+        if x > self.out_radius and self.loaded:
+            if x < self.width() - self.out_radius:
+                self.rate = (x - self.out_radius) / (self.width() - 2 * self.out_radius)
+                self.click.emit(self.rate)
+                self.rate_changed.emit(self.rate)
+                self.update()
+
+    def paintEvent(self, event):
+        """
+        重写绘制事件，自己绘图
+        :param event: 绘图事件
+        """
+        painter = QPainter(self)
+        painter.setRenderHints(QPainter.SmoothPixmapTransform | QPainter.Antialiasing)
+
+        d_r = self.out_radius - self.in_radius
+        w = self.width() - 2 * self.out_radius
+        if self.loaded:
+            # 绘制进度条基础
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(load_color)
+            rect = QRect(d_r, d_r, w + 2 * self.in_radius, self.in_radius * 2)
+            painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
+            # 绘制进度条当前长度
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(in_color)
+            rect = QRect(d_r, d_r, w * self.rate + 2 * self.in_radius, self.in_radius * 2)
+            painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
+            # 绘制进度条节点外圆
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(out_color)
+            painter.drawEllipse(w * self.rate, 0, 2 * self.out_radius, 2 * self.out_radius)
+            # 绘制进度条节点内圆
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(in_color)
+            painter.drawEllipse(w * self.rate + d_r, d_r, 2 * self.in_radius, 2 * self.in_radius)
+        else:
+            # 绘制进度条基础
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(base_color)
+            rect = QRect(d_r, d_r, w + 2 * self.in_radius, self.in_radius * 2)
+            painter.drawRoundedRect(rect, self.in_radius, self.in_radius)
+            # 绘制加载进度条
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(load_color)
+            rect = QRect(d_r, d_r, w * self.rate + 2 * self.in_radius, self.in_radius * 2)
+            painter.drawRoundedRect(rect, self.in_radius, self.in_radius)

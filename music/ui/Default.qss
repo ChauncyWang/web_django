@@ -1,5 +1,6 @@
 #main_window {
     border-image: url(:/jpg/bg1);
+    color: red;
 }
 
 #title_bar {
@@ -29,6 +30,14 @@ SearchTable {
 #lyric {
     color: #FF0080;
 }
+
 #lyric2 {
     color: #00FF80;
+}
+
+#btn_pre_song,#play_pause, #btn_next_song {
+    color: #00aaaf;
+    border: 2px outset beige;
+    border-radius: 20px;
+
 }

@@ -1,5 +1,9 @@
+import sys
+from PyQt5.QtWidgets import QApplication
+
 from music.netease.api import NeteaseAPI
 from music.qq.api import QQMusicAPI
+from music.ui.components import *
 
 
 def test():
@@ -22,4 +26,10 @@ def test2():
         a = s.get_key(t['songmid'])
 
 
-test2()
+def test_time_label():
+    app = QApplication(sys.argv)
+    a = PlayButtonGroup()
+    a.show()
+    sys.exit(app.exec_())
+
+test_time_label()
