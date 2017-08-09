@@ -56,3 +56,50 @@ QComboBox::drop-down {
     border: none;
     background: transparent;
 }
+
+QSlider:groove:vertical {
+    border: 1px solid #00688B;
+    width: 5px;
+    border-radius: 3px;
+}
+
+QSlider:handle:vertical {
+    background: qradialgradient(spread:pad,
+    cx: 0.5,
+    cy: 0.5,
+    radius: 0.5,
+    fx: 0.5,
+    fy: 0.5,
+    stop: 0.6 #45ADED,
+    stop: 0.778409 rgba(255, 255, 255, 255));
+    height: 10px;
+    margin-left: -3px;
+    margin-right: -3px;
+    border-radius: 5px;
+}
+
+QSlider:handle:vertical:hover {
+    background: qradialgradient(spread:pad,
+    cx: 0.5,
+    cy: 0.5,
+    radius: 0.5,
+    fx: 0.5,
+    fy: 0.5,
+    stop: 0.6 #2A8BDA,
+    stop: 0.778409 rgba(255, 255, 255, 255));
+    height: 10px;
+    margin-left: -3px;
+    margin-right: -3px;
+    border-radius: 5px;
+}
+
+QSlider:add-page {
+    border-radius: 3px;
+    background: qlineargradient(x1:0,
+    y1: 0,
+    x2: 0,
+    y2: 1,
+    stop: 0 #009ACD,
+    stop: 1 #008B8B);
+    margin: 2px 0;
+}

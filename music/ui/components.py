@@ -759,7 +759,6 @@ class VolumeButton(AwesomeLabel):
         style = """
             #btn_volume {color:#FFFFFF;}
             #btn_volume:hover {color:#%s;}
-            #sli_volume::sub-page:vertical {color:#808080;}
         """ % theme_color
         x = 30
         self.setFixedSize(x, x)
@@ -769,21 +768,7 @@ class VolumeButton(AwesomeLabel):
         self.sli_volume.setObjectName('sli_volume')
         self.cl_volume.setGeometry(self.width() / 2 - 10, 72, 20, 20)
         self.cl_volume.setObjectName('cl_volume')
-        self.sli_volume.setStyleSheet(""" 
-QSlider:groove:vertical {border: 1px solid #00688B;  
-    width:5px;  
-    border-radius: 3px;}  
-QSlider:handle:vertical{background: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5,stop:0.6 #45ADED, stop:0.778409 rgba(255, 255, 255, 255));  
-    height:10px;  
-    margin-left:-3px;  
-    margin-right:-3px;border-radius:5px;}  
-QSlider:handle:vertical:hover {background: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0.6 #2A8BDA,stop:0.778409 rgba(255, 255, 255, 255));  
-    height:10px;  
-    margin-left:-3px;  
-    margin-right:-3px;border-radius:5px;}  
-QSlider:add-page{border-radius:3px;  
-background:qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #009ACD, stop:1 #008B8B);  
-    margin: 2px 0;} """)
+        self.setStyleSheet(style)
 
     def signal_slot(self):
         self.clicked.connect(self.slot_calc_pos)
@@ -812,3 +797,4 @@ background:qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #009ACD, stop:1 #008B8
         else:
             self.cl_volume.setText('\uf026')
         self.signal_volume_changed.emit(x)
+

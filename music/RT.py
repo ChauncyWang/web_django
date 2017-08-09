@@ -21,9 +21,7 @@ def test1():
 
 def test2():
     s = QQMusicAPI()
-    a = s.search('告白气球', 0, 1)
-    for t in a['data']['song']['list']:
-        a = s.get_key(t['songmid'])
+    a = s.search_song('告白气球', 0, 20)
 
 
 def test_time_label():
@@ -34,4 +32,4 @@ def test_time_label():
     a.show()
     sys.exit(app.exec_())
 
-test_time_label()
+test2()

@@ -7,9 +7,12 @@ class Song:
         self.name = None
         self.artists = None
         self.album = None
+        self.dt = 0
 
     def __str__(self):
-        return '%s %s %s' % (self.name, self.artists, self.album)
+        m = self.dt // 1000 // 60
+        s = self.dt // 1000 - 60 * m
+        return "歌曲:%s 歌手:%s 专辑:%s 时间:%2d:%2d" % (self.name, self.artists, self.album, m, s)
 
 
 class Songs(list):
