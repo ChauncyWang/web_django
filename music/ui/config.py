@@ -1,6 +1,6 @@
 from PyQt5.QtGui import QColor
 
-theme_color = '8000FFFF'
+theme_color = '80FF0066'
 
 foreground_color = QColor.fromRgba(int(theme_color, 16))
 base_color = QColor(255, 255, 255)

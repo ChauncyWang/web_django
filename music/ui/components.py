@@ -1,7 +1,7 @@
 import os
 import re
 
-from PyQt5.QtCore import QRect, Qt, pyqtSignal, QUrl, QRectF
+from PyQt5.QtCore import QRect, Qt, pyqtSignal, QUrl, QRectF, QPropertyAnimation
 from PyQt5.QtGui import QPainter, QColor, QFontDatabase, QFont, QPixmap, QPalette, QPen, QBrush, QPainterPath, \
     QFontMetrics
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QMediaPlaylist
@@ -40,11 +40,11 @@ class MainWindow(QMainWindow):
     def init(self):
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setFixedSize(800, 600)
-        self.title.setGeometry(0, 0, 800, 60)
+        self.title.setGeometry(200, 0, 600, 40)
         self.title.setObjectName("title_bar")
-        self.left_frame.setGeometry(0, 60, 200, 460)
+        self.left_frame.setGeometry(0, 0, 200, 540)
         self.left_frame.setObjectName("left_frame")
-        self.main_frame.setGeometry(200, 60, 600, 460)
+        self.main_frame.setGeometry(200, 40, 600, 500)
         self.main_frame.setObjectName("main_frame")
         self.play_bar.setGeometry(0, 540, 800, 60)
         self.play_bar.setObjectName("play_bar")
@@ -76,10 +76,9 @@ class PlayBar(QFrame):
         self.process_bar = ProgressGroup(self)
         self.song_info = QLabel(self)
         self.player = QMediaPlayer()
+        self.volume = VolumeButton(self)
         self.lyric = Lyric()
         self.quality = QComboBox(self)
-        self.volume_icon = AwesomeLabel(self, 'volume_icon', '\uf027', 40)
-        self.volume = QSlider(self)
 
         self.music = NeteaseAPI()
         self.img = QLabel(self)
@@ -91,11 +90,9 @@ class PlayBar(QFrame):
         self.play_buttons.setGeometry(0, 0, 0, 0)
         self.img.setGeometry(180, 0, 60, 60)
         self.song_info.setGeometry(250, 0, 200, 30)
-        self.process_bar.setGeometry(250, 30, self.width() - 300 - 200 - 40, 0)
-        self.volume_icon.setGeometry(self.width() - 200, 10, 40, 40)
-        self.volume.setOrientation(Qt.Horizontal)
-        self.volume.setGeometry(self.width() - 160, 10, 160, 40)
-        self.quality.setGeometry(250, 40, 40, 18)
+        self.process_bar.setGeometry(240, 40, self.width() - 480, 0)
+        self.quality.setGeometry(self.width() - 240 - 40, 20, 40, 18)
+        self.volume.setGeometry(self.width() - 200, 15, 30, 30)
 
     def init(self):
         """
@@ -127,7 +124,7 @@ class PlayBar(QFrame):
         self.play_buttons.signal_play.connect(self.play_pause)
         self.player.positionChanged.connect(self.update_position)
         self.process_bar.signal_rate_changed.connect(self.set_position)
-        self.volume.valueChanged.connect(self.player.setVolume)
+        self.volume.signal_volume_changed.connect(self.player.setVolume)
 
     def set_song(self, song):
         """
@@ -136,7 +133,7 @@ class PlayBar(QFrame):
         """
         if isinstance(song, NSong):
             self.player.stop()
-            self.process_bar.loaded = False
+            self.process_bar.slot_loaded(False)
             self.song = song
             self.process_bar.slot_cur_time(0)
             self.process_bar.slot_total_time(song.dt)
@@ -168,8 +165,7 @@ class PlayBar(QFrame):
         歌曲下载过程的槽
         :param x: 下载百分比
         """
-        self.process_bar.rate = x
-        self.process_bar.update()
+        self.process_bar.slot_cur_time(x)
 
     def download_music_finished(self, file_name):
         """
@@ -206,25 +202,26 @@ class TitleBar(QFrame):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.search_icon = AwesomeLabel(self, "search_icon", '\uf002', 40)
+        self.search_icon = AwesomeLabel(self, "search_icon", '\uf002', 30)
         self.input = QLineEdit(self)
-        self.min_icon = AwesomeLabel(self, "minimum", '\uf068', 20)
-        self.max_icon = AwesomeLabel(self, "maximum", '\uf067', 20)
+        self.min_icon = AwesomeLabel(self, "minimum", '\uf078', 20)
+        self.max_icon = AwesomeLabel(self, "maximum", '\uf077', 20)
         self.close_icon = AwesomeLabel(self, "close_icon", '\uf00d', 20)
         self.mouse_press_pos = None
         self.init()
         self.signal_slot()
 
     def init(self):
-        self.setFixedSize(800, 60)
-        self.input.setGeometry(100, 10, 200, 40)
-        self.input.setStyleSheet("color:#FFFFFF;border:2px solid;border-radius:20px;"
+        self.input.setGeometry(20, 5, 150, 30)
+        self.input.setStyleSheet("color:#FFFFFF;border:2px solid;border-radius:15px;"
                                  "background-color:#80808080;padding-left:10px;")
-        self.search_icon.setGeometry(250, 10, 40, 40)
+        self.search_icon.setGeometry(180, 5, 30, 30)
         self.search_icon.setStyleSheet("color:#FFFFFF")
-        self.min_icon.setGeometry(self.width() - 60, 20, 20, 20)
-        self.max_icon.setGeometry(self.width() - 40, 20, 20, 20)
-        self.close_icon.setGeometry(self.width() - 20, 20, 20, 20)
+
+    def paintEvent(self, event):
+        self.min_icon.setGeometry(self.width() - 90, 10, 30, 20)
+        self.max_icon.setGeometry(self.width() - 60, 10, 30, 20)
+        self.close_icon.setGeometry(self.width() - 30, 10, 30, 20)
 
     def signal_slot(self):
         self.close_icon.clicked.connect(QApplication.exit)
@@ -277,6 +274,24 @@ class SearchTable(QTableWidget):
         self.songs = []
         self.verticalHeader().setVisible(False)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.setStyleSheet("""
+            QScrollBar {
+                background:write;
+            }
+            QScrollBar::handle {
+                background:lightgray;
+                border:2px solid red;
+                border-radius:5px;
+            }
+            QScrollBar::handle:hover {
+                background:gray;
+            }
+            QScrollBar::sub-line {
+                background:transparent;
+            }
+            QScrollBar::add-line {
+                background:transparent;
+            }""")
         # self.setSelectionBehavior(QAbstractItemView.SelectRows)
 
     def set_songs(self, songs):
@@ -452,11 +467,13 @@ class PlayButton(ClickableLabel):
 
     def __init__(self, size, parent=None, offset=0):
         super().__init__(parent)
+        style = """
+        color:#%s;border: 2px solid #%s;border-radius:%dpx;padding-left:%dpx
+        """ % (theme_color, theme_color, size / 2, offset)
         self.size = size
         self.offset = offset
         self.setFixedSize(size, size)
-        self.setStyleSheet("color:#00aaaf;border: 2px solid #00aaaf;border-radius:%dpx;padding-left:%dpx" % (
-            self.width() / 2, self.offset))
+        self.setStyleSheet(style)
         self.setAlignment(Qt.AlignCenter)
 
 
@@ -573,6 +590,10 @@ class ProgressBar(QFrame):
     def mouseReleaseEvent(self, event):
         self.clicked = False
 
+    def enterEvent(self, event):
+        if self.loaded:
+            self.setCursor(Qt.PointingHandCursor)
+
     def paintEvent(self, event):
         """
         重写绘制事件，自己绘图
@@ -611,13 +632,6 @@ class ProgressBar(QFrame):
             painter.drawEllipse(w * self.rate + d_r, d_r, 2 * self.in_radius, 2 * self.in_radius)
 
 
-class Com(QComboBox):
-    def paintEvent(self, event):
-        self.thread()
-
-        # http://www.cnblogs.com/findumars/p/5618696.html
-
-
 class ProgressGroup(QFrame):
     signal_rate_changed = pyqtSignal(float)
 
@@ -653,15 +667,22 @@ class ProgressGroup(QFrame):
 
     def slot_cur_time(self, x):
         """ 更新当前时间 """
-        m = x // 1000 // 60
-        s = x // 1000 - 60 * m
-        self.cur_time.setText("%02d:%02d" % (m, s))
+        if self.progress_bar.loaded:
+            m = x // 1000 // 60
+            s = x // 1000 - 60 * m
+            self.cur_time.setText("%02d:%02d" % (m, s))
+            rate = x / (self.t_time + 1)
+        else:
+            rate = x
+        self.progress_bar.rate = rate
+        self.update()
 
     def slot_total_time(self, x):
         """ 更新总时间 """
         m = x // 1000 // 60
         s = x // 1000 - 60 * m
         self.total_time.setText("%02d:%02d" % (m, s))
+        self.t_time = x
 
     def slot_loaded(self, loaded):
         """ 更新加载状态 """
@@ -686,3 +707,108 @@ class Player:
 
     def slot_pre(self):
         pass
+
+
+class PopFrame(QFrame):
+    def __init__(self):
+        super().__init__()
+        self.padding = 3
+        self.arrow_h = 5
+        self.w = 2
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Popup)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+
+    def paintEvent(self, event):
+        padding = self.padding
+        arrow_h = self.arrow_h
+        w = self.w
+        path = QPainterPath()
+        path.moveTo(self.width() / 2, self.height() - padding)
+        path.lineTo(self.width() / 2 - arrow_h / 2, self.height() - padding - arrow_h)
+        path.lineTo(padding, self.height() - padding - arrow_h)
+        path.lineTo(padding, padding)
+        path.lineTo(self.width() - padding, padding)
+        path.lineTo(self.width() - padding, self.height() - padding - arrow_h)
+        path.lineTo(self.width() / 2 + arrow_h / 2, self.height() - padding - arrow_h)
+        path.lineTo(self.width() / 2, self.height() - padding)
+        painter = QPainter(self)
+        painter.setRenderHints(QPainter.SmoothPixmapTransform | QPainter.Antialiasing)
+        painter.setPen(QPen(foreground_color, w))
+        painter.drawPath(path)
+        painter.fillPath(path, QBrush(QColor.fromRgb(100, 100, 100, 127)))
+
+
+class VolumeButton(AwesomeLabel):
+    """
+    声音控件组
+    """
+    signal_volume_changed = pyqtSignal(int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent, 'volume_btn', '\uf027', 30)
+        self.muted = False
+
+        self.pop_volume = PopFrame()
+        self.sli_volume = QSlider(self.pop_volume)
+        self.cl_volume = AwesomeLabel(self.pop_volume, 'cl_volume', '\uf027', 20)
+
+        self.init_components()
+        self.signal_slot()
+
+    def init_components(self):
+        style = """
+            #btn_volume {color:#FFFFFF;}
+            #btn_volume:hover {color:#%s;}
+            #sli_volume::sub-page:vertical {color:#808080;}
+        """ % theme_color
+        x = 30
+        self.setFixedSize(x, x)
+        self.setObjectName('btn_volume')
+        self.sli_volume.setGeometry(self.width() / 2 - 10, 10, 20, 60)
+        self.sli_volume.setOrientation(Qt.Vertical)
+        self.sli_volume.setObjectName('sli_volume')
+        self.cl_volume.setGeometry(self.width() / 2 - 10, 72, 20, 20)
+        self.cl_volume.setObjectName('cl_volume')
+        self.sli_volume.setStyleSheet(""" 
+QSlider:groove:vertical {border: 1px solid #00688B;  
+    width:5px;  
+    border-radius: 3px;}  
+QSlider:handle:vertical{background: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5,stop:0.6 #45ADED, stop:0.778409 rgba(255, 255, 255, 255));  
+    height:10px;  
+    margin-left:-3px;  
+    margin-right:-3px;border-radius:5px;}  
+QSlider:handle:vertical:hover {background: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0.6 #2A8BDA,stop:0.778409 rgba(255, 255, 255, 255));  
+    height:10px;  
+    margin-left:-3px;  
+    margin-right:-3px;border-radius:5px;}  
+QSlider:add-page{border-radius:3px;  
+background:qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #009ACD, stop:1 #008B8B);  
+    margin: 2px 0;} """)
+
+    def signal_slot(self):
+        self.clicked.connect(self.slot_calc_pos)
+        self.cl_volume.clicked.connect(self.slot_mute)
+        self.sli_volume.valueChanged.connect(self.slot_volume)
+
+    def slot_calc_pos(self):
+        pos = self.parent().mapToGlobal(self.pos())
+        # pos = self.pos()
+        self.pop_volume.setGeometry(pos.x(), pos.y() - 100, self.width(), 100)
+        self.pop_volume.show()
+
+    def slot_mute(self):
+        self.muted = not self.muted
+        if self.muted:
+            self.cl_volume.setText('\uf026')
+            self.signal_volume_changed.emit(0)
+        else:
+            self.slot_volume(self.sli_volume.value())
+
+    def slot_volume(self, x):
+        if x > 80:
+            self.cl_volume.setText('\uf028')
+        elif x > 0:
+            self.cl_volume.setText('\uf027')
+        else:
+            self.cl_volume.setText('\uf026')
+        self.signal_volume_changed.emit(x)
