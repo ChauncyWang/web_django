@@ -18,15 +18,16 @@ class QQMusicAPI:
         self.proxies = {'http': proxy, 'https': proxy}
         self.session.cookies = cookiejar.LWPCookieJar('a.c')
 
-    def get(self, url, params=None, headers=None):
+    def get(self, url, params=None, headers=None, stream=False):
         """
         get 请求
+        :param stream:
         :param url: 请求地址
         :param params: 参数
         :param headers: 请求头
         :return: 响应
         """
-        resp = self.session.get(url, params=params, headers=headers)
+        resp = self.session.get(url, params=params, headers=headers, stream=stream)
         if resp.status_code == 200:
             return resp
 
@@ -52,6 +53,8 @@ class QQMusicAPI:
             songs = Songs()
             for i in list:
                 song = Song()
+                song.id = i['songid']
+                song.mid = i['songmid']
                 song.name = i['songname']
                 song.album = i['albumname']
                 song.artists = Artists()
@@ -61,10 +64,12 @@ class QQMusicAPI:
                     song.artists.append(a)
                 song.dt = i['interval'] * 1000
                 songs.append(song)
-                print(song)
+                # see paydownload
+                a = str(i['pay']) + str(self.get_key(song.mid))
+                print(a)
             return songs
 
-    def get_key(self, mid, file='M800%s.mp3'):
+    def get_key(self, mid, file='C400%s.m4a'):
         params = {
             'g_tk': '5381',
             'jsonpCallback': 'jsonpCallback',
@@ -86,17 +91,9 @@ class QQMusicAPI:
         resp = self.get(key_url, params).text
         if isinstance(resp, str):
             resp = json.loads(resp[resp.index('(') + 1:resp.rindex(')')])
-        print(resp['data']['items'][0]['vkey'])
-        print(resp['data']['items'][0]['filename'])
-        self.get_song(resp['data']['items'][0]['filename'], resp['data']['items'][0]['vkey'])
+        return self.get_song(resp['data']['items'][0]['filename'], resp['data']['items'][0]['vkey'],True)
 
-    def get_song(self, file_name, vkey):
+    def get_song(self, file_name, vkey, stream=False):
         params = {'vkey': vkey, 'guid': '534549750', 'fromtag': '66', 'uin': '0'}
-        resp = self.get(play_url + file_name, params)
-        try:
-            resp = resp.content
-            with open(file_name, 'wb') as f:
-                f.write(resp)
-        except:
-            print('gggg')
-            return
+        resp = self.get(play_url + file_name, params, stream=stream)
+        return resp
