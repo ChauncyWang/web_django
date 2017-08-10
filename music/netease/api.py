@@ -4,15 +4,16 @@ import logging
 import re
 import requests
 
+from music.api import BaseAPI
 from music.netease.models import *
 from music.netease.config import *
 from music.netease.encrypt import encrypted_request
 
-from music.netease.exception import *
+from music.exception_handle import *
 from http import cookiejar
 
 
-class NeteaseAPI:
+class NeteaseAPI(BaseAPI):
     """
     网易云音乐 API
     """
@@ -39,11 +40,11 @@ class NeteaseAPI:
             raise RequestException(response.status_code)
 
     @exception
-    def get(self, url, params=None, headers=header):
+    def get(self, url, params=None, headers=header, stream=False):
         """
         Get 请求
         """
-        response = self.session.get(url, params=params, headers=headers, proxies=self.proxies)
+        response = self.session.get(url, params=params, headers=headers, proxies=self.proxies, stream=stream)
         if response.status_code == 200:
             return response
         else:

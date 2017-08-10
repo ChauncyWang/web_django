@@ -31,10 +31,11 @@ class HttpThread(QObject, Thread):
             os.makedirs(path)
 
     def run(self):
-        md = hashlib.md5()
-        md.update(self.file_name.encode('utf8'))
-        file_name = md.hexdigest()
-        file_name = self.path + file_name
+        # md = hashlib.md5()
+        # md.update(self.file_name.encode('utf8'))
+        # file_name = md.hexdigest()
+        # file_name = self.path + file_name
+        file_name = self.path + self.file_name
         if os.path.exists(file_name):
             logging.info("发现缓存文件[%s]." % file_name)
         else:

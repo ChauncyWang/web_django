@@ -11,6 +11,8 @@ def exception(method):
             print("[%s] 请求出错! 状态码[%d]" % (method.__name__, e.code))
         except ParameterException as e:
             print("[%s] 请求参数格式错误![%d:%s]" % (method.__name__, e.code, e.msg))
+        except QParseException as e:
+            print("[%s] 解析 QQ音乐 json 数据出错![%s]" % (method.__name__, e.msg))
         except Exception as e:
             e.with_traceback()
 
@@ -42,4 +44,9 @@ class ParameterException(Exception):
 
     def __init__(self, code, msg):
         self.code = code
+        self.msg = msg
+
+
+class QParseException(Exception):
+    def __init__(self, msg):
         self.msg = msg

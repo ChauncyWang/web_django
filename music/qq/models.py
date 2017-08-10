@@ -1,3 +1,6 @@
+from music import *
+
+
 class SearchType:
     """
     搜索的类型
@@ -11,3 +14,32 @@ class SearchType:
     @staticmethod
     def str(t):
         return SearchType.types[t]
+
+
+class QSong(Song):
+    def __init__(self):
+        self.id = None
+        self.mid = None
+        self.name = None
+        self.dt = None
+        self.action = None
+        self.pay = None
+
+
+class QArtist(Artist):
+    def __init__(self):
+        self.id = None
+        self.mid = None
+        self.name = None
+
+
+class QArtists(Artists):
+    def __init__(self):
+        super().__init__()
+
+
+class QAlbum(Album):
+    def __init__(self):
+        self.id = None
+        self.mid = None
+        self.name = None

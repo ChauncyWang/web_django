@@ -27,6 +27,9 @@ class NSong(Song):
         sec = self.dt // 1000 - min * 60
         return "%-s %s %s %02d:%02d" % (self.name, self.artists, self.album.name, min, sec)
 
+    def can_play(self):
+        return self.url is not None
+
 
 class NSongs(Songs):
     def __init__(self, dict):
