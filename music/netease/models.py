@@ -1,4 +1,6 @@
 from music import Song, Album, Artist, Quality, Artists, Songs
+from music.exception_handle import exception
+from music.netease import NETEASE
 from music.util import dict_adapter
 
 
@@ -7,35 +9,27 @@ class NSong(Song):
     网易歌曲信息
     """
 
-    def __init__(self, dic):
+    def __init__(self):
         super().__init__()
-        self.id = dic.get('id')
-        self.name = dic.get('name')
-        self.artists = NArtists(dict_adapter(dic, 'ar', 'artist', 'artists'))
-        alias = dic.get('alia')
-        alias1 = dic.get('alias')
-        self.alias = alias1 if alias is None else alias
-        self.album = NAlbum(dict_adapter(dic, 'al', 'album', 'albums'))
-        self.mv = dic.get('mv')
-        dt = dic.get('dt')
-        dt1 = dic.get('duration')
-        self.dt = dt1 if dt is None else dt
+        self.id = None
+        self.name = None
+        self.artists = None
+        self.alias = None
+        self.album = None
+        self.mv = None
+        self.dt = None
         self.url = None
+        self.f = NETEASE
 
     def __str__(self):
         min = self.dt // 1000 // 60
         sec = self.dt // 1000 - min * 60
         return "%-s %s %s %02d:%02d" % (self.name, self.artists, self.album.name, min, sec)
 
-    def can_play(self):
-        return self.url is not None
-
 
 class NSongs(Songs):
-    def __init__(self, dict):
+    def __init__(self):
         super().__init__()
-        for t in dict:
-            self.append(NSong(t))
 
 
 class NArtist(Artist):
@@ -111,3 +105,22 @@ class SearchType:
     @staticmethod
     def str(t):
         return SearchType.types[t]
+
+
+class Parse:
+    @staticmethod
+    @exception
+    def parse_song(dic):
+        song = NSong()
+        song.id = dic.get('id')
+        song.name = dic.get('name')
+        song.artists = NArtists(dict_adapter(dic, 'ar', 'artist', 'artists'))
+        alias = dic.get('alia')
+        alias1 = dic.get('alias')
+        song.alias = alias1 if alias is None else alias
+        song.album = NAlbum(dict_adapter(dic, 'al', 'album', 'albums'))
+        song.mv = dic.get('mv')
+        dt = dic.get('dt')
+        dt1 = dic.get('duration')
+        song.dt = dt1 if dt is None else dt
+        return song

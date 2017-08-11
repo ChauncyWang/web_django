@@ -10,9 +10,8 @@ from PyQt5.QtWidgets import QLabel, QApplication, QLineEdit, QFrame, QMainWindow
 
 from music import Song
 from music.netease.models import *
-from music.netease.api import NeteaseAPI
 from music.ui.config import *
-from music.ui.util import download_mp3, download_img
+from music.core import *
 
 """
 QFontDatabase.addApplicationFont(os.path.dirname(__file__) + '/res/font/fontawesome-webfont.ttf')
@@ -28,11 +27,12 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(QMainWindow, self).__init__(parent)
         QFontDatabase.addApplicationFont(os.path.dirname(__file__) + '/res/font/fontawesome-webfont.ttf')
-        self.play_bar = PlayBar(self)
+        self.music = Core()
+
+        self.play_bar = PlayBar(self.music, self)
         self.title = TitleBar(self)
         self.left_frame = QFrame(self)
-        self.music = NeteaseAPI()
-        self.main_frame = SearchTable(self)
+        self.main_frame = SearchTable(self.music, self)
         self.main_frame.update_model()
         self.init()
         self.signal_slot()
@@ -55,9 +55,8 @@ class MainWindow(QMainWindow):
         self.main_frame.play_song.connect(self.play_bar.set_song)
 
     def search_song(self):
-        songs = self.music.search_songs(self.title.input.text(), 0, 20)
+        songs = self.music.search(self.title.input.text(), 0, 20)
         self.main_frame.set_songs(songs)
-        self.main_frame.update_model()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return:
@@ -69,7 +68,7 @@ class PlayBar(QFrame):
     音乐播放器下边的播放栏
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, core, parent):
         super().__init__(parent)
         QFontDatabase.addApplicationFont(os.path.dirname(__file__) + '/res/font/fontawesome-webfont.ttf')
         self.play_buttons = PlayButtonGroup(self)
@@ -80,7 +79,7 @@ class PlayBar(QFrame):
         self.lyric = Lyric()
         self.quality = QComboBox(self)
 
-        self.music = NeteaseAPI()
+        self.music = core
         self.img = QLabel(self)
         self.song = None
         self.init()
@@ -126,23 +125,31 @@ class PlayBar(QFrame):
         self.process_bar.signal_rate_changed.connect(self.set_position)
         self.volume.signal_volume_changed.connect(self.player.setVolume)
 
-    def set_song(self, song):
+    def set_song(self, song, use_qq):
         """
         设置 PlayBar 要播放的歌曲
         :param song: 歌曲
         """
-        if isinstance(song, NSong):
+        if isinstance(song, Song):
             self.player.stop()
             self.process_bar.slot_loaded(False)
             self.song = song
-            self.process_bar.slot_cur_time(0)
             self.process_bar.slot_total_time(song.dt)
             self.song_info.setText(song.name + "-" + str(song.artists))
-            self.lyric.set_lyrics(self.music.get_song_lyric(self.song.id))
-            self.process_bar.rate = 0
-            download_mp3(song.url, song.name, self.download_music_update, self.download_music_finished)
-            download_img(song.album.pic_url, song.album.name, None, self.download_head_img_finished)
-            self.player.play()
+            self.song.br = 320000
+            self.process_bar.slot_cur_time(0)
+            if isinstance(self.song, SONG):
+                if use_qq:
+                    self.song.id = self.song.qid
+                else:
+                    self.song.id = self.song.nid
+            download_mp3(self.music, use_qq, song, song.name + str(use_qq),
+                         self.download_music_update,
+                         self.download_music_finished)
+            download_img(self.music, use_qq, song, song.album.name + str(use_qq),
+                         None,
+                         self.download_head_img_finished)
+            self.lyric.set_lyrics(self.music.lyric(self.song, use_qq))
             self.update()
 
     def play_pause(self, playing):
@@ -173,8 +180,10 @@ class PlayBar(QFrame):
         :param file_name: 歌曲存储位置
         """
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_name)))
-        self.process_bar.slot_loaded(True)
+        self.player.pause()
         self.player.play()
+        self.process_bar.slot_loaded(True)
+        self.play_pause(False)
 
     def download_head_img_finished(self, file_name):
         """
@@ -267,13 +276,14 @@ class AwesomeLabel(ClickableLabel):
 
 
 class SearchTable(QTableWidget):
-    play_song = pyqtSignal(Song)
+    play_song = pyqtSignal(Song, bool)
 
-    def __init__(self, parent=None):
+    def __init__(self, core, parent=None):
         super(QTableWidget, self).__init__(parent)
         self.songs = []
         self.verticalHeader().setVisible(False)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.music = core
         self.setStyleSheet("""
             QScrollBar {
                 background:write;
@@ -305,7 +315,7 @@ class SearchTable(QTableWidget):
         self.setHorizontalHeaderItem(0, QTableWidgetItem("歌曲"))
         self.setHorizontalHeaderItem(1, QTableWidgetItem("歌手"))
         self.setHorizontalHeaderItem(2, QTableWidgetItem("专辑"))
-        self.setHorizontalHeaderItem(3, QTableWidgetItem("播放"))
+        self.setHorizontalHeaderItem(3, QTableWidgetItem("歌曲来源"))
         self.setColumnWidth(0, 100)
         self.setColumnWidth(1, 100)
         self.setColumnWidth(2, 100)
@@ -314,13 +324,14 @@ class SearchTable(QTableWidget):
             self.setItem(i, 0, QTableWidgetItem(self.songs[i - 1].name))
             self.setItem(i, 1, QTableWidgetItem(str(self.songs[i - 1].artists)))
             self.setItem(i, 2, QTableWidgetItem(self.songs[i - 1].album.name))
-            if self.songs[i - 1].url is not None:
-                lab = AwesomeLabel(None, str(i - 1), "B", 15)
-                self.setCellWidget(i, 3, lab)
-                lab.send.connect(self.play_clicked)
+            f = self.music.playable(self.songs[i - 1])
+            lab = FromFrame(self, f, self.songs[i - 1])
+            lab.signal_play.connect(self.play_clicked)
+            self.setCellWidget(i, 3, lab)
 
-    def play_clicked(self, name):
-        self.play_song.emit(self.songs[int(name)])
+    def play_clicked(self, song, use_qq):
+        """ 某个播放键点击了 """
+        self.play_song.emit(song, use_qq)
 
 
 class Lyric(QFrame):
@@ -675,7 +686,7 @@ class ProgressGroup(QFrame):
         else:
             rate = x
         self.progress_bar.rate = rate
-        self.update()
+        self.progress_bar.update()
 
     def slot_total_time(self, x):
         """ 更新总时间 """
@@ -798,3 +809,50 @@ class VolumeButton(AwesomeLabel):
             self.cl_volume.setText('\uf026')
         self.signal_volume_changed.emit(x)
 
+
+class FromFrame(QFrame):
+    signal_play = pyqtSignal(Song, bool)
+
+    def __init__(self, parent=None, f=0, song=None):
+        super().__init__(parent)
+        self.qqmusic = ClickableLabel(self)
+        self.netease = ClickableLabel(self)
+        self.f_qq = (f & QQ) != 0
+        self.f_netease = (f & NETEASE) != 0
+        self.song = song
+        self.init_components()
+        self.signal_slot()
+
+    def init_components(self):
+        self.setMinimumSize(50, 20)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.qqmusic.setStyleSheet("border-image: url(:/png/qqmusic);")
+        self.netease.setStyleSheet("border-image: url(:/png/netease);")
+
+    def signal_slot(self):
+        self.qqmusic.clicked.connect(self.qqmusic_play)
+        self.netease.clicked.connect(self.netease_play)
+
+    def paintEvent(self, event):
+        w = self.width()
+        h = self.height() / 2 - 10
+        if self.f_qq and self.f_netease:
+            self.qqmusic.setGeometry(w / 2 - 21, h, 20, 20)
+            self.netease.setGeometry(w / 2 + 1, h, 20, 20)
+        elif self.f_qq:
+            self.qqmusic.setGeometry(w / 2 - 10, h, 20, 20)
+            self.netease.hide()
+        elif self.f_netease:
+            self.netease.setGeometry(w / 2 - 10, h, 20, 20)
+            self.qqmusic.hide()
+        else:
+            self.netease.hide()
+            self.qqmusic.hide()
+
+    def qqmusic_play(self):
+        """ 播放   qq 音乐 """
+        self.signal_play.emit(self.song, True)
+
+    def netease_play(self):
+        """ 播放 网易云音乐 """
+        self.signal_play.emit(self.song, False)

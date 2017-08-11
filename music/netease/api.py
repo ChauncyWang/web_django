@@ -76,9 +76,11 @@ class NeteaseAPI(BaseAPI):
         result = json.loads(self.search(content, SearchType.song, offset, limit).text)
         if result['code'] == 200:
             result_songs = result['result']['songs']
-            songs = NSongs(result_songs)
-            for s in songs:
-                s.url = self.get_song_url(s.id)
+            songs = []
+            for s in result_songs:
+                song = Parse.parse_song(s)
+                song.url = self.song_url(song)
+                songs.append(song)
             return songs
         else:
             raise ParameterException(result['code'], result['msg'])
@@ -140,21 +142,6 @@ class NeteaseAPI(BaseAPI):
         return result
 
     @exception
-    def get_song_lyric(self, _id):
-        """
-        根据歌曲id获取歌词
-        :param _id: 歌曲id
-        :return: 歌词
-        """
-        params = {'id': _id, 'lv': -1, 'kv': -1, 'tv': -1}
-        result = self.get(lyric_url, params)
-        result = json.loads(result.text)
-        try:
-            return result['lrc']['lyric']
-        except:
-            return None
-
-    @exception
     def get_toplist(self):
         """
         获取各个榜单的信息
@@ -185,3 +172,40 @@ class NeteaseAPI(BaseAPI):
         result = json.loads(re.search(patt, resp).group(1))
         for i in result:
             s = NSong(i)
+
+    @exception
+    def album_img_url(self, song):
+        return song.album.pic_url
+
+    def playable(self, song):
+        return song.url is not None
+
+    @exception
+    def lyric(self, song):
+        """
+        获取歌词
+        :param song:要获取歌词的歌曲
+        :return: 歌曲歌词
+        """
+        params = {'id': song.id, 'lv': -1, 'kv': -1, 'tv': -1}
+        result = self.get(lyric_url, params)
+        result = json.loads(result.text)
+        try:
+            return result['lrc']['lyric']
+        except KeyError as e:
+            e.with_traceback()
+            return None
+
+    @exception
+    def song_url(self, song):
+        """
+        获取歌曲 url
+        :param song: 要获取的歌曲
+        :return: 歌曲播放地址
+        """
+        br = 320000
+        params = {'ids': [song.id], 'br': br, 'csrf_token': ''}
+        response = self.post(song_url, params)
+        response = json.loads(response.text)
+        return response['data'][0]['url']
+

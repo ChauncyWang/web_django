@@ -1,13 +1,7 @@
-import logging
 import sys
 
-import requests
-from PyQt5.QtWidgets import QApplication
-
-from music.netease.api import NeteaseAPI
-from music.qq.api import QQMusicAPI
 from music.ui.components import *
-from music.ui.util import download
+from music.ui import resource
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s (%(filename)s:%(lineno)d) [%(threadName)s]-[%(levelname)s]: %(message)s', )
@@ -35,11 +29,17 @@ def test2():
 
 def test_time_label():
     app = QApplication(sys.argv)
-    a = QMainWindow()
-    b = VolumeButton(a)
-    b.signal_volume_changed.connect(print)
+    a = FromFrame(f=3)
     a.show()
     sys.exit(app.exec_())
 
 
-test2()
+def testcore():
+    core = Core()
+    a = core.search("薛之谦", 0, 20)
+    print(a)
+
+
+test_time_label()
+
+

@@ -15,6 +15,9 @@ class QQMusicAPI(BaseAPI):
     QQ音乐 api
     """
 
+    def search_artists(self, content, page, num):
+        pass
+
     def __init__(self, timeout=60, proxy=None):
         self.session = requests.session()
         self.timeout = timeout
@@ -70,7 +73,7 @@ class QQMusicAPI(BaseAPI):
                 # see paydownload
             return songs
 
-    def get_key(self, mid, file='M800%s.mp3'):
+    def get_key(self, mid, file):
         params = {
             'g_tk': '5381',
             'format': 'json',
@@ -91,17 +94,19 @@ class QQMusicAPI(BaseAPI):
             resp = json.loads(resp[resp.index('(') + 1:resp.rindex(')')])
         return resp['data']['items'][0]['filename'], resp['data']['items'][0]['vkey']
 
-    def get_song_url(self, file_name, vkey):
+    def song_url(self, song):
+        file = 'M800%s.mp3' if song.pay == 0 else 'C400%s.m4a'
+        file_name, vkey = self.get_key(song.mid, file)
         params = {'vkey': vkey, 'guid': '534549750', 'fromtag': '66', 'uin': '0'}
         url = play_url + file_name + '?'
         for p in params.keys():
             url += "%s=%s&" % (p, params[p])
         return url[:len(url) - 1]
 
-    def get_lyric(self, _id, mid):
+    def lyric(self, song):
         params = {
             'nobase64': '1',
-            'musicid': _id,
+            'musicid': song.id,
             'callback': 'jsonp1',
             'g_tk': '5381',
             'jsonpCallback': 'jsonp1',
@@ -115,7 +120,7 @@ class QQMusicAPI(BaseAPI):
             'needNewCode': '0',
         }
         header = {
-            'Referer': 'https://y.qq.com/n/yqq/song/%s.html' % mid
+            'Referer': 'https://y.qq.com/n/yqq/song/%s.html' % song.mid
         }
         data = self.get(lyric_url, params, headers=header).text
 
@@ -125,20 +130,14 @@ class QQMusicAPI(BaseAPI):
 
         html_parser = HTMLParser()
         data = html_parser.unescape(data)
-        print(data)
+        return data
 
-    def can_play(self, song):
-        return song.action != 3
-
-    @exception
-    def album_img(self, song):
-        """"""
+    def album_img_url(self, song):
         url = album_img_url % song.album.mid
-        resp = self.get(url)
-        if resp.status_code == 200:
-            return resp.content
-        else:
-            raise RequestException(resp.status_code)
+        return url
+
+    def playable(self, song):
+        return song.action != 3
 
 
 class Parse:

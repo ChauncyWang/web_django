@@ -1,4 +1,5 @@
 from music import *
+from music.qq import QQ
 
 
 class SearchType:
@@ -24,6 +25,12 @@ class QSong(Song):
         self.dt = None
         self.action = None
         self.pay = None
+        self.f = QQ
+
+    def __str__(self):
+        min = self.dt // 1000 // 60
+        sec = self.dt // 1000 - min * 60
+        return "%-s %s %s %02d:%02d" % (self.name, self.artists, self.album.name, min, sec)
 
 
 class QArtist(Artist):

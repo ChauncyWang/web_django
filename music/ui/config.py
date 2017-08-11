@@ -4,7 +4,7 @@ theme_color = '80FF0066'
 
 foreground_color = QColor.fromRgba(int(theme_color, 16))
 base_color = QColor(255, 255, 255)
-load_color = QColor(200, 200, 200)
+load_color = QColor(180, 180, 180)
 in_color = foreground_color
 out_color = QColor(255, 255, 255)
 

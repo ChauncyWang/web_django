@@ -2,8 +2,13 @@
   <dictionary name="hy">
     <words>
       <w>hexchar</w>
+      <w>nalbum</w>
+      <w>nsong</w>
       <w>playbar</w>
       <w>playbtns</w>
+      <w>qalbum</w>
+      <w>qqmusic</w>
+      <w>qsong</w>
       <w>toplist</w>
       <w>toplists</w>
     </words>
